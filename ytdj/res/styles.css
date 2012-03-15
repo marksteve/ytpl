@@ -1,0 +1,174 @@
+@import url(http://fonts.googleapis.com/css?family=Oswald);
+
+/* http://meyerweb.com/eric/tools/css/reset/
+   v2.0 | 20110126
+   License: none (public domain)
+*/
+
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed,
+figure, figcaption, footer, header, hgroup,
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+}
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure,
+footer, header, hgroup, menu, nav, section {
+  display: block;
+}
+body {
+  line-height: 1;
+}
+ol, ul {
+  list-style: none;
+}
+blockquote, q {
+  quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+  content: '';
+  content: none;
+}
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+/* For modern browsers */
+.cf:before,
+.cf:after {
+    content:"";
+    display:table;
+}
+
+.cf:after {
+    clear:both;
+}
+
+/* For IE 6/7 (trigger hasLayout) */
+.cf {
+    zoom:1;
+}
+
+/******************************************************************************/
+
+body {
+  background: url(/res/padded.png);
+  color: white;
+  text-shadow: #000 2px 1px 0;
+}
+
+body, input {
+  font: 12px/1.5 sans-serif;
+}
+
+h1 {
+  font-family: 'Oswald';
+  font-size: 48px;
+  margin-bottom: 18px;
+}
+
+a {
+  color: white;
+}
+
+input {
+  border: 0;
+  border-radius: 3px;
+}
+
+#ytpl {
+  background: #334;
+  box-shadow: #000 0 0 10px 0;
+  padding: 10px;
+  width: 480px;
+  margin: 50px auto;
+}
+
+#search {
+  margin-bottom: 18px;
+}
+
+#search input {
+  font-size: 24px;
+  padding: 5px;
+  width: 100%;
+}
+
+#results {
+  background-color: #334;
+  position: absolute;
+  width: 480px;
+}
+
+#results li {
+  cursor: pointer;
+  margin: 10px 0;
+}
+
+#results li:hover {
+  background-color: #445;
+}
+
+#results li img {
+  float: left;
+  width: 120px;
+}
+
+#results li .title {
+  font-size: 18px;
+  margin-left: 130px;
+}
+
+#results li .author {
+  display: block;
+  margin-left: 130px;
+}
+
+#playlist {
+  border: 5px #445 solid;
+  margin-bottom: 18px;
+}
+
+#playlist li {
+  padding: 10px;
+  border-top: 5px #445 solid;
+}
+
+#playlist li:first-child {
+  border: 0;
+}
+
+#playlist li img {
+  float: left;
+  width: 120px;
+}
+
+#playlist li .title {
+  font-size: 18px;
+  margin-left: 130px;
+}
+
+#playlist li .author {
+  display: block;
+  margin-left: 130px;
+}
+
+#footer, #footer a {
+  color: #556;
+}
