@@ -22,10 +22,8 @@ class YTPL:
         environment = json.load(f)
       self.redis = redis.Redis(
         host=environment['DOTCLOUD_DATA_REDIS_HOST'],
-        # environment['DOTCLOUD_DATA_REDIS_LOGIN']
         password=environment['DOTCLOUD_DATA_REDIS_PASSWORD'],
         port=int(environment['DOTCLOUD_DATA_REDIS_PORT']),
-        # environment['DOTCLOUD_DATA_REDIS_URL']
       )
     else:
       self.redis = redis.Redis()
@@ -45,18 +43,20 @@ class YTPL:
   @cherrypy.expose
   @cherrypy.tools.json_in(on=True)
   @cherrypy.tools.json_out(on=True)
-  def default(self, pl_name, action=None, vid_id_or_idx=None):
-    if action:
+  def default(self, pl_name, vid_id=None):
+    req = cherrypy.request
+    if req.method == 'PUT':
+      self.redis.hset(pl_name, vid_id, json.dumps(cherrypy.request.json))
 
-      if action == 'add':
-        self.redis.rpush(pl_name, json.dumps(cherrypy.request.json))
-
-      elif action == 'clear':
-        self.redis.ltrim(pl_name, 1, 0)
+    elif req.method == 'DELETE':
+      if vid_id:
+        self.redis.hdel(pl_name, vid_id)
+      else: # Clear all
+        self.redis.hdel(self.redis.hkeys(pl_name))
 
     return {
       'name': pl_name,
-      'videos': [json.loads(s) for s in self.redis.lrange(pl_name, 0, -1)],
+      'videos': [json.loads(s) for s in self.redis.hgetall(pl_name).values()],
     }
 
   @cherrypy.expose

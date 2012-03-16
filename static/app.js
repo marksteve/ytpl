@@ -13,18 +13,10 @@
     Playlist: Backbone.Collection.extend({
       model: YTPL.models.Video,
       url: function() {
-        // For some reason, overriding sync doesn't work with the add event
-        return '/' + this.plName + '/' + 'add';
+        return '/' + this.plName;
       },
-      sync: function(method, collection, options) {
-        if (method == 'read') {
-          var promise = $.ajax({
-            url: '/' + this.plName
-          });
-          promise.done(function(response) {
-            options.success(response.videos);
-          });
-        }
+      parse: function(response) {
+        return response.videos;
       }
     })
   });
@@ -89,14 +81,25 @@
   YTPL.views.Video = Backbone.View.extend({
     tagName: 'li',
     className: 'cf',
+    events: {
+      'click .delete': 'delete'
+    },
     template:
       '<img src="<%= thumbnail.url %>">' +
-      // '<a href="#" class="close">&times;</a>' +
+      '<a href="#" class="delete">&times;</a>' +
       '<h3 class="title"><%= title %></h3>' +
       '<span class="author"><%= author %></span>',
     render: function() {
       this.$el.html(_.template(this.template, this.model.toJSON()));
       return this;
+    },
+    'delete': function(e) {
+      e.preventDefault();
+      this.model.destroy({
+        success: _.bind(function(model) {
+          this.remove();
+        }, this)
+      });
     }
   });
 
