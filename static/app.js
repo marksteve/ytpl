@@ -82,6 +82,8 @@
     tagName: 'li',
     className: 'cf',
     events: {
+      'click .title': 'play',
+      'click img': 'play',
       'click .delete': 'delete'
     },
     template:
@@ -92,6 +94,10 @@
     render: function() {
       this.$el.html(_.template(this.template, this.model.toJSON()));
       return this;
+    },
+    play: function() {
+      player.pos = this.model.get('pos');
+      player.play();
     },
     'delete': function(e) {
       e.preventDefault();

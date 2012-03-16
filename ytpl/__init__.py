@@ -49,6 +49,8 @@ class YTPL:
   @cherrypy.tools.json_out(on=True)
   def default(self, pl_name, id=None):
     req = cherrypy.request
+    pl_key = 'pl:%s' % pl_name
+
     if req.method == 'PUT':
       video = cherrypy.request.json
 
@@ -61,14 +63,21 @@ class YTPL:
       # Store vid info
       self.redis.set('vid:%s' % vid, '%s:%s' % (vid, json.dumps(video)))
 
+      # Get new entry index
+      pos = self.redis.llen(pl_key)
+
       # Push to playlist
-      self.redis.rpush('pl:%s' % pl_name, id)
+      self.redis.rpush(pl_key, id)
+
+      video['pos'] = pos
+
+      return video
 
     elif req.method == 'DELETE':
       if id:
-        self.redis.lrem('pl:%s' % pl_name, id)
+        self.redis.lrem(pl_key, id)
       else: # Clear all
-        self.redis.ltrim('pl:%s' % pl_name, 1, -1)
+        self.redis.ltrim(pl_key, 1, -1)
 
     videos = []
 
@@ -85,9 +94,12 @@ class YTPL:
         vid_infos[vid] = json.loads(info)
 
       # Fill playlist items with vid info
-      for id in self.redis.lrange('pl:%s' % pl_name, 0, -1):
+      for pos, id in enumerate(self.redis.lrange(pl_key, 0, -1)):
         vid_info = vid_infos[id_vid[id]]
-        vid_info['id'] = id
+        vid_info.update({
+          'id': id,
+          'pos': pos,
+        })
         videos.append(vid_info)
 
     return {

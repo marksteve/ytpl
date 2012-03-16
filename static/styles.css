@@ -159,6 +159,7 @@ input {
 }
 
 #playlist li img {
+  cursor: pointer;
   float: left;
   width: 120px;
 }
@@ -169,6 +170,7 @@ input {
 }
 
 #playlist li .title {
+  cursor: pointer;
   font-size: 18px;
   margin-left: 130px;
 }
