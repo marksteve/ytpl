@@ -4,12 +4,12 @@
   <link href="/res/styles.css" rel="stylesheet">
 <body>
   <div id="ytpl">
-    <h1>YTPL</h1>
+    <h1><a href="/">YTPL</a></h1>
+    <div id="player"></div>
     <div id="search">
       <input type="text" placeholder="Search">
       <ul id="results"></ul>
     </div>
-    <div id="playing"></div>
     <ul id="playlist">
       <li>Your playlist is empty. Start searching to add songs!
     </ul>
@@ -21,4 +21,6 @@
   <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
   <script src="http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.3.1/underscore-min.js"></script>
   <script src="http://cdnjs.cloudflare.com/ajax/libs/backbone.js/0.9.1/backbone-min.js"></script>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/swfobject/2.2/swfobject.js"></script>
+  <script src="http://www.youtube.com/player_api"></script>
   <script src="/res/app.js"></script>

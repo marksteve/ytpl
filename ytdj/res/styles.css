@@ -83,6 +83,10 @@ h1 {
   margin-bottom: 18px;
 }
 
+h1 a {
+  text-decoration: none;
+}
+
 a {
   color: white;
 }
@@ -157,6 +161,11 @@ input {
 #playlist li img {
   float: left;
   width: 120px;
+}
+
+#playlist li .close {
+  float: right;
+  font-weight: bold;
 }
 
 #playlist li .title {

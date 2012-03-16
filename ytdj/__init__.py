@@ -31,23 +31,20 @@ class Root:
     }
 
   @cherrypy.expose
+  @cherrypy.tools.json_in(on=True)
   @cherrypy.tools.json_out(on=True)
-  def default(self, pl_name, action=None, s_id_or_idx=None):
+  def default(self, pl_name, action=None, song_id_or_idx=None):
     if action:
 
-      if action == 'add' and s_id_or_idx:
-        self.redis.rpush(pl_name, s_id_or_idx)
-
-      elif action == 'delete' and s_id_or_idx:
-        self.redis.lset(pl_name, s_id_or_idx, '__deleted__')
-        self.redis.lrem(0, '__deleted__')
+      if action == 'add':
+        self.redis.rpush(pl_name, json.dumps(cherrypy.request.json))
 
       elif action == 'clear':
         self.redis.ltrim(pl_name, 1, 0)
 
     return {
       'name': pl_name,
-      'songs': self.redis.lrange(pl_name, 0, -1),
+      'songs': [json.loads(s) for s in self.redis.lrange(pl_name, 0, -1)],
     }
 
   @cherrypy.expose
@@ -61,7 +58,8 @@ class Root:
     results = []
     for e in feed['entry']:
       results.append({
-        'id': e['media$group']['yt$videoid']['$t'],
+        'id': uuid.uuid4().hex,
+        'vid': e['media$group']['yt$videoid']['$t'],
         'author': e['author'][0]['name']['$t'],
         'title': e['title']['$t'],
         'thumbnail': [t for t in e['media$group']['media$thumbnail'] if t['yt$name'] == 'hqdefault'][0],

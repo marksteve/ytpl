@@ -13,7 +13,18 @@
     Playlist: Backbone.Collection.extend({
       model: YTPL.models.Song,
       url: function() {
-        return this.plName + '/add';
+        // For some reason, overriding sync doesn't work with the add event
+        return '/' + this.plName + '/' + 'add';
+      },
+      sync: function(method, collection, options) {
+        if (method == 'read') {
+          var promise = $.ajax({
+            url: '/' + this.plName
+          });
+          promise.done(function(response) {
+            options.success(response.songs);
+          });
+        }
       }
     })
   });
@@ -80,6 +91,7 @@
     className: 'cf',
     template:
       '<img src="<%= thumbnail.url %>">' +
+      // '<a href="#" class="close">&times;</a>' +
       '<h3 class="title"><%= title %></h3>' +
       '<span class="author"><%= author %></span>',
     render: function() {
@@ -92,6 +104,13 @@
     el: '#playlist',
     initialize: function() {
       this.collection.on('add', this.addSong, this);
+      this.collection.on('reset', this.addSongs, this);
+    },
+    addSongs: function(collection) {
+      if (this.collection.length > 0) {
+        this.$el.empty();
+      }
+      collection.each(this.addSong, this);
     },
     addSong: function(model) {
       if (this.collection.length == 1) {
@@ -101,6 +120,50 @@
         model: model
       });
       this.$el.append(view.render().el);
+    }
+  });
+
+  YTPL.views.Player = Backbone.View.extend({
+    pos: 0, // Start with first song
+    el: '#player',
+    initialize: function() {
+      this.collection.on('add', this.playFirstAdd, this);
+    },
+    setIframe: function() {
+      this.ytPlayer = new YT.Player('player', {
+        height: '270',
+        width: '480',
+        events: {
+          'onReady': _.bind(this.ready, this),
+          'onStateChange': _.bind(this.stateChange, this)
+        }
+      });
+    },
+    ready: function(e) {
+      // Auto play first song
+      this.play();
+    },
+    play: function() {
+      var song = this.collection.at(this.pos);
+      if (song) {
+        this.ytPlayer.loadVideoById(song.get('vid'));
+        this.ytPlayer.playVideo();
+      }
+    },
+    playFirstAdd: function() {
+      if (this.collection.length == 1) {
+        this.play();
+      }
+    },
+    stateChange: function(e) {
+      // Next song
+      if (e.data == YT.PlayerState.ENDED) {
+        this.pos++;
+        if (this.pos >= this.collection.length) {
+          this.pos = 0;
+        }
+        this.play();
+      }
     }
   });
 
@@ -122,13 +185,20 @@
       });
     },
     'default': function(plName) {
+      results.plName = plName;
       new YTPL.views.Search({collection: results});
       playlist.plName = plName;
       new YTPL.views.Playlist({collection: playlist});
+      playlist.fetch({success: function() {
+        window.player = new YTPL.views.Player({collection: playlist});
+        player.setIframe();
+      }});
     }
   });
 
+})(jQuery);
+
+function onYouTubePlayerAPIReady() {
   new YTPL.Router();
   Backbone.history.start();
-
-})(jQuery);
+}
