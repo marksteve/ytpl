@@ -1,4 +1,5 @@
 (function($, undefined) {
+
   window.YTPL = {models: {}, collections: {}, views: {}};
 
   _(YTPL.models).extend({
@@ -96,8 +97,8 @@
       return this;
     },
     play: function() {
-      player.pos = this.model.get('pos');
-      player.play();
+      YTPL.player.pos = this.model.get('pos');
+      YTPL.player.play();
     },
     'delete': function(e) {
       e.preventDefault();
@@ -200,8 +201,8 @@
       playlist.plName = plName;
       new YTPL.views.Playlist({collection: playlist});
       playlist.fetch({success: function() {
-        window.player = new YTPL.views.Player({collection: playlist});
-        player.setIframe();
+        YTPL.player = new YTPL.views.Player({collection: playlist});
+        YTPL.player.setIframe();
       }});
     }
   });
