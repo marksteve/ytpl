@@ -72,15 +72,19 @@ class YTPL:
 
     videos = []
 
+    # Get references
     id_vid = self.redis.hgetall('id_vid:%s' % pl_name)
     vid_infos = {}
 
+    # Get vids from references
     vids = ['vid:%s' % vid for vid in id_vid.values()]
     if vids:
+      # Get vid info
       for vid_info in self.redis.mget(vids):
         vid, info = vid_info.split(':', 1)
         vid_infos[vid] = json.loads(info)
 
+      # Fill playlist items with vid info
       for id in self.redis.lrange('pl:%s' % pl_name, 0, -1):
         vid_info = vid_infos[id_vid[id]]
         vid_info['id'] = id
