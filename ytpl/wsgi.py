@@ -2,4 +2,4 @@ from ytdj import YTDJ
 import cherrypy
 
 
-application = cherrypy.Application(YTDJ())
+application = cherrypy.tree.mount(YTDJ())
