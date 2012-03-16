@@ -70,9 +70,9 @@ class YTPL:
 def start():
   app = cherrypy.Application(YTPL())
   app.merge({
-    '/res': {
+    '/static': {
       'tools.staticdir.on': True,
-      'tools.staticdir.dir': os.path.join(package_path, 'res'),
+      'tools.staticdir.dir': os.path.join(os.path.dirname(package_path), 'static'),
     }
   })
   cherrypy.server.socket_port = 25347

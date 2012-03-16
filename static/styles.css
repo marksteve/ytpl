@@ -68,7 +68,7 @@ table {
 /******************************************************************************/
 
 body {
-  background: url(/res/padded.png);
+  background: url(/static/padded.png);
   color: white;
   text-shadow: #000 2px 1px 0;
 }
