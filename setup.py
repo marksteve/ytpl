@@ -2,15 +2,14 @@ from setuptools import setup
 
 
 setup(
-  name='ytdj',
+  name='ytpl',
   version='0.0.1',
-  packages=['ytdj'],
-  scripts={},
+  packages=['ytpl'],
   author='Mark Steve Samson',
   author_email='contact@marksteve.me',
-  description='Youtube DJ',
+  description='Youtube Playlists',
   entry_points={
-    'console_scripts': ['ytdj = ytdj:start'],
+    'console_scripts': ['ytpl = ytpl:start'],
   },
   install_requires=[
     'cherrypy',
