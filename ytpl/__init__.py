@@ -24,7 +24,7 @@ class YTPL:
         host=environment['DOTCLOUD_DATA_REDIS_HOST'],
         # environment['DOTCLOUD_DATA_REDIS_LOGIN']
         password=environment['DOTCLOUD_DATA_REDIS_PASSWORD'],
-        port=environment['DOTCLOUD_DATA_REDIS_PORT'],
+        port=int(environment['DOTCLOUD_DATA_REDIS_PORT']),
         # environment['DOTCLOUD_DATA_REDIS_URL']
       )
     else:
