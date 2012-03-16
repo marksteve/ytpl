@@ -14,7 +14,7 @@ YT_SEARCH_URL = 'https://gdata.youtube.com/feeds/api/videos?q=%s&orderby=relevan
 package_path = os.path.dirname(__file__)
 
 
-class Root:
+class YTDJ:
   def __init__(self):
     self.redis = redis.Redis()
 
@@ -68,7 +68,7 @@ class Root:
 
 
 def start():
-  app = cherrypy.Application(Root())
+  app = cherrypy.Application(YTDJ())
   app.merge({
     '/res': {
       'tools.staticdir.on': True,

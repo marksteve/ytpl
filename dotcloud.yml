@@ -1,0 +1,6 @@
+data:
+  type: redis
+
+www:
+  type: python
+  approot: ytpl

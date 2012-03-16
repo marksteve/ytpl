@@ -1,0 +1,4 @@
+cherrypy
+redis
+mako
+requests
