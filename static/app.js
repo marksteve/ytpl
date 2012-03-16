@@ -125,10 +125,10 @@
       if (this.collection.length == 1) {
         this.$el.empty();
       }
-      var view = new YTPL.views.Video({
+      model.view = new YTPL.views.Video({
         model: model
       });
-      this.$el.append(view.render().el);
+      this.$el.append(model.view.render().el);
     }
   });
 
@@ -157,6 +157,7 @@
       if (video) {
         this.ytPlayer.loadVideoById(video.get('vid'));
         this.ytPlayer.playVideo();
+        video.view.$el.addClass('playing').siblings().removeClass('playing');
       }
     },
     playFirstAdd: function() {

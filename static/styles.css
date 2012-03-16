@@ -158,6 +158,10 @@ input {
   border: 0;
 }
 
+#playlist li.playing {
+  background-color: #445;
+}
+
 #playlist li img {
   cursor: pointer;
   float: left;
