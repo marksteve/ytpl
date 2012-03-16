@@ -1,5 +1,5 @@
-from ytdj import YTDJ
+from ytpl import YTPL
 import cherrypy
 
 
-application = cherrypy.tree.mount(YTDJ())
+application = cherrypy.tree.mount(YTPL())
