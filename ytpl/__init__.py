@@ -9,6 +9,7 @@ import uuid
 
 
 YT_SEARCH_URL = 'https://gdata.youtube.com/feeds/api/videos?q=%s&orderby=relevance&max-results=10&v=2&alt=json'
+ENVIRON_FILE = '/home/dotcloud/environment.json'
 
 
 package_path = os.path.dirname(__file__)
@@ -16,7 +17,18 @@ package_path = os.path.dirname(__file__)
 
 class YTPL:
   def __init__(self):
-    self.redis = redis.Redis()
+    if os.path.exists(ENVIRON_FILE):
+      with open(ENVIRON_FILE) as f:
+        environment = json.load(f)
+      self.redis = redis.Redis(
+        host=environment['DOTCLOUD_DATA_REDIS_HOST'],
+        # environment['DOTCLOUD_DATA_REDIS_LOGIN']
+        password=environment['DOTCLOUD_DATA_REDIS_PASSWORD'],
+        port=environment['DOTCLOUD_DATA_REDIS_PORT'],
+        # environment['DOTCLOUD_DATA_REDIS_URL']
+      )
+    else:
+      self.redis = redis.Redis()
 
   @cherrypy.expose
   def index(self):
