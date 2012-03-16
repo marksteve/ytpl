@@ -43,20 +43,48 @@ class YTPL:
   @cherrypy.expose
   @cherrypy.tools.json_in(on=True)
   @cherrypy.tools.json_out(on=True)
-  def default(self, pl_name, vid_id=None):
+  def default(self, pl_name, id=None):
     req = cherrypy.request
     if req.method == 'PUT':
-      self.redis.hset(pl_name, vid_id, json.dumps(cherrypy.request.json))
+      video = cherrypy.request.json
+
+      del video['id'] # Don't store in video info
+      vid = video['vid']
+
+      # Store vid reference
+      self.redis.hset('id_vid:%s' % pl_name, id, vid)
+
+      # Store vid info
+      self.redis.set('vid:%s' % vid, '%s:%s' % (vid, json.dumps(video)))
+
+      # Push to playlist
+      self.redis.rpush('pl:%s' % pl_name, id)
 
     elif req.method == 'DELETE':
-      if vid_id:
-        self.redis.hdel(pl_name, vid_id)
+      if id:
+        self.redis.lrem('pl:%s' % pl_name, id)
       else: # Clear all
-        self.redis.hdel(self.redis.hkeys(pl_name))
+        self.redis.ltrim('pl:%s' % pl_name, 1, -1)
+
+    videos = []
+
+    id_vid = self.redis.hgetall('id_vid:%s' % pl_name)
+    vid_infos = {}
+
+    vids = ['vid:%s' % vid for vid in id_vid.values()]
+    if vids:
+      for vid_info in self.redis.mget(vids):
+        vid, info = vid_info.split(':', 1)
+        vid_infos[vid] = json.loads(info)
+
+      for id in self.redis.lrange('pl:%s' % pl_name, 0, -1):
+        vid_info = vid_infos[id_vid[id]]
+        vid_info['id'] = id
+        videos.append(vid_info)
 
     return {
       'name': pl_name,
-      'videos': [json.loads(s) for s in self.redis.hgetall(pl_name).values()],
+      'videos': videos,
     }
 
   @cherrypy.expose
