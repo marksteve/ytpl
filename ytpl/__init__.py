@@ -36,8 +36,12 @@ class YTPL:
   @cherrypy.expose
   @cherrypy.tools.json_out(on=True)
   def new(self):
+    while True:
+      pl_name = uuid.uuid1().hex[:8]
+      if not self.redis.exists(pl_name):
+        break
     return {
-      'name': uuid.uuid1().hex,
+      'name': pl_name,
     }
 
   @cherrypy.expose
