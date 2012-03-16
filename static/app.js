@@ -2,16 +2,16 @@
   window.YTPL = {models: {}, collections: {}, views: {}};
 
   _(YTPL.models).extend({
-    Song: Backbone.Model.extend({
+    Video: Backbone.Model.extend({
     })
   });
 
   _(YTPL.collections).extend({
     Results: Backbone.Collection.extend({
-      model: YTPL.models.Song
+      model: YTPL.models.Video
     }),
     Playlist: Backbone.Collection.extend({
-      model: YTPL.models.Song,
+      model: YTPL.models.Video,
       url: function() {
         // For some reason, overriding sync doesn't work with the add event
         return '/' + this.plName + '/' + 'add';
@@ -22,7 +22,7 @@
             url: '/' + this.plName
           });
           promise.done(function(response) {
-            options.success(response.songs);
+            options.success(response.videos);
           });
         }
       }
@@ -86,7 +86,7 @@
     }
   });
 
-  YTPL.views.Song = Backbone.View.extend({
+  YTPL.views.Video = Backbone.View.extend({
     tagName: 'li',
     className: 'cf',
     template:
@@ -103,20 +103,20 @@
   YTPL.views.Playlist = Backbone.View.extend({
     el: '#playlist',
     initialize: function() {
-      this.collection.on('add', this.addSong, this);
-      this.collection.on('reset', this.addSongs, this);
+      this.collection.on('add', this.addVideo, this);
+      this.collection.on('reset', this.addVideos, this);
     },
-    addSongs: function(collection) {
+    addVideos: function(collection) {
       if (this.collection.length > 0) {
         this.$el.empty();
       }
-      collection.each(this.addSong, this);
+      collection.each(this.addVideo, this);
     },
-    addSong: function(model) {
+    addVideo: function(model) {
       if (this.collection.length == 1) {
         this.$el.empty();
       }
-      var view = new YTPL.views.Song({
+      var view = new YTPL.views.Video({
         model: model
       });
       this.$el.append(view.render().el);
@@ -124,7 +124,7 @@
   });
 
   YTPL.views.Player = Backbone.View.extend({
-    pos: 0, // Start with first song
+    pos: 0, // Start with first video
     el: '#player',
     initialize: function() {
       this.collection.on('add', this.playFirstAdd, this);
@@ -140,13 +140,13 @@
       });
     },
     ready: function(e) {
-      // Auto play first song
+      // Auto play first video
       this.play();
     },
     play: function() {
-      var song = this.collection.at(this.pos);
-      if (song) {
-        this.ytPlayer.loadVideoById(song.get('vid'));
+      var video = this.collection.at(this.pos);
+      if (video) {
+        this.ytPlayer.loadVideoById(video.get('vid'));
         this.ytPlayer.playVideo();
       }
     },
@@ -156,7 +156,7 @@
       }
     },
     stateChange: function(e) {
-      // Next song
+      // Next video
       if (e.data == YT.PlayerState.ENDED) {
         this.pos++;
         if (this.pos >= this.collection.length) {

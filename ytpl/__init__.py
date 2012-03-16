@@ -45,7 +45,7 @@ class YTPL:
   @cherrypy.expose
   @cherrypy.tools.json_in(on=True)
   @cherrypy.tools.json_out(on=True)
-  def default(self, pl_name, action=None, song_id_or_idx=None):
+  def default(self, pl_name, action=None, vid_id_or_idx=None):
     if action:
 
       if action == 'add':
@@ -56,7 +56,7 @@ class YTPL:
 
     return {
       'name': pl_name,
-      'songs': [json.loads(s) for s in self.redis.lrange(pl_name, 0, -1)],
+      'videos': [json.loads(s) for s in self.redis.lrange(pl_name, 0, -1)],
     }
 
   @cherrypy.expose
