@@ -13,9 +13,8 @@ setup(
   },
   install_requires=[
     'cherrypy',
-    'slumber',
     'redis',
     'mako',
-    'requests'
+    'requests',
   ],
 )
