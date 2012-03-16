@@ -3,4 +3,3 @@ data:
 
 www:
   type: python
-  approot: ytpl
