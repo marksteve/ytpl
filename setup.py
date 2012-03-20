@@ -16,5 +16,6 @@ setup(
     'redis',
     'mako',
     'requests',
+    'gdata==2.0.16',
   ],
 )

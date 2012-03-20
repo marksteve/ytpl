@@ -1,3 +1,5 @@
+from gdata.client import GDClient, RequestError
+from gdata.gauth import AUTH_SCOPES, OAuth2Token, OAuth2AccessTokenError
 from mako.template import Template
 import cherrypy
 import json
@@ -8,30 +10,94 @@ import urllib
 import uuid
 
 
+DEV_SERVER_HOST = 'localhost'
+DEV_SERVER_PORT = 34897
+
 YT_SEARCH_URL = 'https://gdata.youtube.com/feeds/api/videos?q=%s&orderby=relevance&max-results=10&v=2&alt=json'
+
+USERINFO_SCOPE = 'https://www.googleapis.com/auth/userinfo.profile'
+USERINFO_URL = 'https://www.googleapis.com/oauth2/v1/userinfo'
+
 ENVIRON_FILE = '/home/dotcloud/environment.json'
 
+if os.path.exists(ENVIRON_FILE):
+  with open(ENVIRON_FILE) as f:
+    env = json.load(f)
+else:
+  env = os.environ
 
 package_path = os.path.dirname(__file__)
 
 
 class YTPL:
   def __init__(self):
-    if os.path.exists(ENVIRON_FILE):
-      with open(ENVIRON_FILE) as f:
-        environment = json.load(f)
-      self.redis = redis.Redis(
-        host=environment['DOTCLOUD_DATA_REDIS_HOST'],
-        password=environment['DOTCLOUD_DATA_REDIS_PASSWORD'],
-        port=int(environment['DOTCLOUD_DATA_REDIS_PORT']),
-      )
-    else:
-      self.redis = redis.Redis()
+    self.redis = redis.Redis(
+      host=env.get('DOTCLOUD_DATA_REDIS_HOST', 'localhost'),
+      password=env.get('DOTCLOUD_DATA_REDIS_PASSWORD', None),
+      port=int(env.get('DOTCLOUD_DATA_REDIS_PORT', 6379)),
+    )
+    self.root_url = env.get('DOTCLOUD_WWW_HTTP_URL',
+                            'http://%s:%d/' % (DEV_SERVER_HOST, DEV_SERVER_PORT))
+    self.oauth_callback_url = self.root_url + 'oauth2callback'
+
+  def _create_token(self, **kwargs):
+    scopes = list(AUTH_SCOPES['youtube'])
+    scopes.append(USERINFO_SCOPE)
+    token = OAuth2Token(env['GOOGLE_CLIENT_ID'], env['GOOGLE_CLIENT_SECRET'],
+                        scope=' '.join(scopes), user_agent='YTPL')
+    token.redirect_uri = self.oauth_callback_url
+    return token
 
   @cherrypy.expose
   def index(self):
-    t = Template(filename=os.path.join(package_path, 'index.html'))
-    return t.render()
+    if cherrypy.session.get('user_id'):
+      t = Template(filename=os.path.join(package_path, 'index.html'))
+      return t.render()
+    else:
+      raise cherrypy.HTTPRedirect('/signin')
+
+  @cherrypy.expose
+  def signin(self, force=None):
+    token = self._create_token()
+    params = {}
+    if force == 'true':
+      params['approval_prompt'] = 'force'
+    token_auth_url = token.generate_authorize_url(self.oauth_callback_url, access_type='offline',
+                                                  **params)
+    raise cherrypy.HTTPRedirect(token_auth_url)
+
+  @cherrypy.expose
+  def oauth2callback(self, code):
+    token = self._create_token()
+
+    def force_signin():
+      raise cherrypy.HTTPRedirect('/signin?force=true')
+
+    try:
+      token = token.get_access_token(code)
+    except OAuth2AccessTokenError:
+      force_signin()
+
+    client = token.authorize(GDClient(source=token.user_agent))
+
+    try:
+      userinfo = json.loads(client.request('GET', USERINFO_URL).read())
+    except RequestError:
+      force_signin()
+
+    user_id = userinfo['id']
+    token_key = 'token:%s' % user_id
+
+    if not self.redis.exists(token_key):
+      refresh_token = token.refresh_token
+      if refresh_token:
+        self.redis.set(token_key, refresh_token)
+      else:
+        force_signin()
+
+    cherrypy.session['user_id'] = user_id
+
+    raise cherrypy.HTTPRedirect('/')
 
   @cherrypy.expose
   @cherrypy.tools.json_out(on=True)
@@ -127,7 +193,14 @@ class YTPL:
     return results
 
 
+def setup_server():
+  cherrypy.config.update({
+    'tools.sessions.on': True,
+  })
+
+
 def start():
+  setup_server()
   app = cherrypy.Application(YTPL())
   app.merge({
     '/static': {
@@ -135,5 +208,6 @@ def start():
       'tools.staticdir.dir': os.path.join(os.path.dirname(package_path), 'static'),
     }
   })
-  cherrypy.server.socket_port = 25347
+  cherrypy.server.socket_host = DEV_SERVER_HOST
+  cherrypy.server.socket_port = DEV_SERVER_PORT
   cherrypy.quickstart(app)
