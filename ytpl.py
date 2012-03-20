@@ -1,5 +1,3 @@
-from gdata.client import GDClient, RequestError
-from gdata.gauth import AUTH_SCOPES, OAuth2Token, OAuth2AccessTokenError
 from mako.template import Template
 import cherrypy
 import json
@@ -15,9 +13,6 @@ DEV_SERVER_PORT = 34897
 
 YT_SEARCH_URL = 'https://gdata.youtube.com/feeds/api/videos?q=%s&orderby=relevance&max-results=10&v=2&alt=json'
 
-USERINFO_SCOPE = 'https://www.googleapis.com/auth/userinfo.profile'
-USERINFO_URL = 'https://www.googleapis.com/oauth2/v1/userinfo'
-
 ENVIRON_FILE = '/home/dotcloud/environment.json'
 
 if os.path.exists(ENVIRON_FILE):
@@ -26,7 +21,7 @@ if os.path.exists(ENVIRON_FILE):
 else:
   env = os.environ
 
-package_path = os.path.dirname(__file__)
+mod_path = os.path.dirname(__file__)
 
 
 class YTPL:
@@ -38,66 +33,11 @@ class YTPL:
     )
     self.root_url = env.get('DOTCLOUD_WWW_HTTP_URL',
                             'http://%s:%d/' % (DEV_SERVER_HOST, DEV_SERVER_PORT))
-    self.oauth_callback_url = self.root_url + 'oauth2callback'
-
-  def _create_token(self, **kwargs):
-    scopes = list(AUTH_SCOPES['youtube'])
-    scopes.append(USERINFO_SCOPE)
-    token = OAuth2Token(env['GOOGLE_CLIENT_ID'], env['GOOGLE_CLIENT_SECRET'],
-                        scope=' '.join(scopes), user_agent='YTPL')
-    token.redirect_uri = self.oauth_callback_url
-    return token
 
   @cherrypy.expose
   def index(self):
-    if cherrypy.session.get('user_id'):
-      t = Template(filename=os.path.join(package_path, 'index.html'))
-      return t.render()
-    else:
-      raise cherrypy.HTTPRedirect('/signin')
-
-  @cherrypy.expose
-  def signin(self, force=None):
-    token = self._create_token()
-    params = {}
-    if force == 'true':
-      params['approval_prompt'] = 'force'
-    token_auth_url = token.generate_authorize_url(self.oauth_callback_url, access_type='offline',
-                                                  **params)
-    raise cherrypy.HTTPRedirect(token_auth_url)
-
-  @cherrypy.expose
-  def oauth2callback(self, code):
-    token = self._create_token()
-
-    def force_signin():
-      raise cherrypy.HTTPRedirect('/signin?force=true')
-
-    try:
-      token = token.get_access_token(code)
-    except OAuth2AccessTokenError:
-      force_signin()
-
-    client = token.authorize(GDClient(source=token.user_agent))
-
-    try:
-      userinfo = json.loads(client.request('GET', USERINFO_URL).read())
-    except RequestError:
-      force_signin()
-
-    user_id = userinfo['id']
-    token_key = 'token:%s' % user_id
-
-    if not self.redis.exists(token_key):
-      refresh_token = token.refresh_token
-      if refresh_token:
-        self.redis.set(token_key, refresh_token)
-      else:
-        force_signin()
-
-    cherrypy.session['user_id'] = user_id
-
-    raise cherrypy.HTTPRedirect('/')
+    t = Template(filename=os.path.join(mod_path, 'index.html'))
+    return t.render()
 
   @cherrypy.expose
   @cherrypy.tools.json_out(on=True)
@@ -205,7 +145,7 @@ def start():
   app.merge({
     '/static': {
       'tools.staticdir.on': True,
-      'tools.staticdir.dir': os.path.join(os.path.dirname(package_path), 'static'),
+      'tools.staticdir.dir': os.path.join(mod_path, 'static'),
     }
   })
   cherrypy.server.socket_host = DEV_SERVER_HOST

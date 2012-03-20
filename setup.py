@@ -4,7 +4,7 @@ from setuptools import setup
 setup(
   name='ytpl',
   version='0.0.1',
-  packages=['ytpl'],
+  py_modules=['ytpl'],
   author='Mark Steve Samson',
   author_email='contact@marksteve.me',
   description='Youtube Playlists',
@@ -16,6 +16,5 @@ setup(
     'redis',
     'mako',
     'requests',
-    'gdata==2.0.16',
   ],
 )
