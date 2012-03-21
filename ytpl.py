@@ -65,19 +65,6 @@ class YTPL:
     return FBClient(env.get('FB_CLIENT_ID'), env.get('FB_CLIENT_SECRET'), **kwargs)
 
   @cherrypy.expose
-  def index(self):
-    t = Template(filename=os.path.join(mod_path, 'about.html'))
-    user = self.sess.get('user')
-    return t.render(user=user)
-
-  @cherrypy.expose
-  def default(self, pl_name):
-    t = Template(filename=os.path.join(mod_path, 'playlist.html'))
-    user = self.sess.get('user')
-    is_creator = user and self.redis.get('creator:%s' % pl_name) == user['id']
-    return t.render(user=user, is_creator=is_creator)
-
-  @cherrypy.expose
   def fbsignin(self):
     fbclient = self.get_fbclient()
     raise cherrypy.HTTPRedirect(fbclient.get_auth_url())
@@ -96,6 +83,27 @@ class YTPL:
     raise cherrypy.HTTPRedirect('/new')
 
   @cherrypy.expose
+  def index(self):
+    t = Template(filename=os.path.join(mod_path, 'about.html'))
+    user = self.sess.get('user')
+    return t.render(user=user)
+
+  @cherrypy.expose
+  def default(self, pl_name):
+    t = Template(filename=os.path.join(mod_path, 'playlist.html'))
+    creator_key = 'creator:%s' % pl_name
+
+    # create if new
+    if self.user and not self.redis.exists('pl:%s' % pl_name):
+      self.redis.set(creator_key, self.user['id'])
+      is_creator = True
+
+    else:
+      is_creator = self.user and self.redis.get(creator_key) == self.user['id']
+
+    return t.render(user=self.user, is_creator=is_creator)
+
+  @cherrypy.expose
   @cherrypy.tools.json_out(on=True)
   def new(self):
     if not self.user:
@@ -103,7 +111,7 @@ class YTPL:
 
     while True:
       pl_name = randstr(8)
-      if not self.redis.exists(pl_name):
+      if not self.redis.exists('pl:%s' % pl_name):
         break
 
     self.redis.set('creator:%s' % pl_name, self.user['id'])
@@ -114,12 +122,15 @@ class YTPL:
   @cherrypy.tools.json_in(on=True)
   @cherrypy.tools.json_out(on=True)
   def pl(self, pl_name, id=None):
-    if (self.req.method != 'GET' # modify playlist
-        and (not self.user # not signed in
-             or self.redis.get('creator:%s' % pl_name) != self.user['id'])): # not owner
-      raise cherrypy.HTTPError(401)
-
     pl_key = 'pl:%s' % pl_name
+    creator_key = 'creator:%s' % pl_name
+
+    # check permissions
+    if self.user and self.redis.get(creator_key) == self.user['id']:
+      pass
+    # if unauthorized and tried to modify...
+    elif self.req.method != 'GET':
+      raise cherrypy.HTTPError(401)
 
     if self.req.method == 'PUT':
       video = self.req.json
