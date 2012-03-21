@@ -38,7 +38,7 @@
     },
     addToPL: function(e) {
       playlist.create(this.model.toJSON());
-      results.reset([]);
+      YTPL.results.reset([]);
     }
   });
 
