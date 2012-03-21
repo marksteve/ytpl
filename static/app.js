@@ -202,7 +202,7 @@
       new YTPL.views.Search({collection: YTPL.results});
       YTPL.playlist.plName = plName;
       new YTPL.views.Playlist({collection: YTPL.playlist});
-      playlist.fetch({success: function() {
+      YTPL.playlist.fetch({success: function() {
         YTPL.player = new YTPL.views.Player({collection: YTPL.playlist});
         YTPL.player.setIframe();
       }});
