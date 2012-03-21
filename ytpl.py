@@ -1,11 +1,14 @@
 from fboauth2 import FBClient
 from mako.template import Template
 import cherrypy
+import cherrys
 import json
 import os
 import redis
 import requests
 import urllib
+
+cherrypy.lib.sessions.RedisSession = cherrys.RedisSession
 
 
 DEV_SERVER_HOST = 'localhost'
@@ -197,6 +200,11 @@ class YTPL:
 def setup_server():
   cherrypy.config.update({
     'tools.sessions.on': True,
+    'tools.sessions.storage_type': 'redis',
+    'tools.sessions.host': env.get('DOTCLOUD_DATA_REDIS_HOST', 'localhost'),
+    'tools.sessions.port': env.get('DOTCLOUD_DATA_REDIS_PORT', 6379),
+    'tools.sessions.db': 0,
+    'tools.sessions.password': env.get('DOTCLOUD_DATA_REDIS_PASSWORD'),
   })
 
 

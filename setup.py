@@ -16,9 +16,11 @@ setup(
   ],
   install_requires=[
     'cherrypy',
-    'redis',
-    'mako',
-    'requests',
+    'cherrys',
     'fboauth2',
+    'hiredis',
+    'mako',
+    'redis',
+    'requests',
   ],
 )
