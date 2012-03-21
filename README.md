@@ -6,10 +6,11 @@ Right now any user can modify any playlist. I'll add signin with social networks
 ## TODO
 * ~~Start anywhere from playlist~~
 * ~~Playing feedback~~
-* Use sorted sets instead
+* ~~Use sorted sets instead~~
+* ~~Social integration~~
+* ~~Playlist locking~~
+* Whitelist editors
 * Drag and drop
-* Social integration
-* Playlist locking
 * Instructions
 * Real-time changes (collab)
 * Stats/Rankings
