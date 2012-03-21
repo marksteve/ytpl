@@ -9,6 +9,9 @@
   <script src="http://www.youtube.com/player_api"></script>
   <script src="/static/app.js"></script>
   <script>
+    YTPL.canEdit = %{'true' if can_edit else 'false'};
+  </script>
+  <script>
     var _gaq = _gaq || [];
     _gaq.push(['_setAccount', 'UA-16858406-6']);
     _gaq.push(['_trackPageview']);
@@ -31,7 +34,7 @@
     % endif
     </div>
     <div id="player"></div>
-    % if is_creator:
+    % if can_edit:
     <div id="search">
       <input type="text" placeholder="Start typing to add entries to your playlist">
       <ul id="results"></ul>

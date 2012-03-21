@@ -102,6 +102,10 @@
       '<span class="author"><%= author %></span>',
     render: function() {
       this.$el.html(_.template(this.template, this.model.toJSON()));
+      if (!YTPL.canEdit) {
+        // Remove delete button for non editors
+        this.$('.delete').remove();
+      }
       return this;
     },
     play: function() {
@@ -186,8 +190,8 @@
     }
   });
 
-  var results = new YTPL.collections.Results();
-  var playlist = new YTPL.collections.Playlist();
+  YTPL.results = new YTPL.collections.Results();
+  YTPL.playlist = new YTPL.collections.Playlist();
 
   YTPL.Router = Backbone.Router.extend({
     routes: {
@@ -195,9 +199,9 @@
     },
     'default': function(plName) {
       results.plName = plName;
-      new YTPL.views.Search({collection: results});
+      new YTPL.views.Search({collection: YTPL.results});
       playlist.plName = plName;
-      new YTPL.views.Playlist({collection: playlist});
+      new YTPL.views.Playlist({collection: YTPL.playlist});
       playlist.fetch({success: function() {
         YTPL.player = new YTPL.views.Player({collection: playlist});
         YTPL.player.setIframe();

@@ -96,12 +96,14 @@ class YTPL:
     # create if new
     if self.user and not self.redis.exists('pl:%s' % pl_name):
       self.redis.set(creator_key, self.user['id'])
-      is_creator = True
+      can_edit = True
 
     else:
-      is_creator = self.user and self.redis.get(creator_key) == self.user['id']
+      can_edit = self.user and self.redis.get(creator_key) == self.user['id']
 
-    return t.render(user=self.user, is_creator=is_creator)
+    # TODO: Add whitelist editors
+
+    return t.render(user=self.user, can_edit=can_edit)
 
   @cherrypy.expose
   @cherrypy.tools.json_out(on=True)
