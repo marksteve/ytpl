@@ -37,7 +37,7 @@
       return this;
     },
     addToPL: function(e) {
-      playlist.create(this.model.toJSON());
+      YTPL.playlist.create(this.model.toJSON());
       YTPL.results.reset([]);
     }
   });
@@ -198,12 +198,12 @@
       ':plName': 'default'
     },
     'default': function(plName) {
-      results.plName = plName;
+      YTPL.results.plName = plName;
       new YTPL.views.Search({collection: YTPL.results});
-      playlist.plName = plName;
+      YTPL.playlist.plName = plName;
       new YTPL.views.Playlist({collection: YTPL.playlist});
       playlist.fetch({success: function() {
-        YTPL.player = new YTPL.views.Player({collection: playlist});
+        YTPL.player = new YTPL.views.Player({collection: YTPL.playlist});
         YTPL.player.setIframe();
       }});
     }
