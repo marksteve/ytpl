@@ -74,13 +74,13 @@ body {
 }
 
 body, input {
-  font: 12px/1.5 sans-serif;
+  font: 14px/1.5 sans-serif;
 }
 
 h1 {
   font-family: 'Oswald';
-  font-size: 48px;
-  margin-bottom: 18px;
+  font-size: 56px;
+  margin-bottom: 21px;
 }
 
 h1 a {
@@ -93,7 +93,6 @@ a {
 
 input {
   border: 0;
-  border-radius: 3px;
 }
 
 #ytpl {
@@ -102,10 +101,26 @@ input {
   padding: 10px;
   width: 480px;
   margin: 50px auto;
+  position: relative;
 }
 
-#search {
-  margin-bottom: 18px;
+#about a {
+  background-color: #dde;
+  box-shadow: #000 5px 5px 0;
+  color: #445;
+  font-size: 28px;
+  padding: 5px;
+  text-decoration: none;
+}
+
+#profile {
+  position: absolute;
+  top: 20px;
+  right: 10px;
+}
+
+#profile a {
+  text-decoration: none;
 }
 
 #search input {
@@ -135,7 +150,7 @@ input {
 }
 
 #results li .title {
-  font-size: 18px;
+  font-size: 21px;
   margin-left: 130px;
 }
 
@@ -146,7 +161,7 @@ input {
 
 #playlist {
   border: 5px #445 solid;
-  margin-bottom: 18px;
+  margin-bottom: 21px;
 }
 
 #playlist li {
@@ -171,17 +186,22 @@ input {
 #playlist li .delete {
   float: right;
   font-weight: bold;
+  text-decoration: none;
 }
 
 #playlist li .title {
   cursor: pointer;
-  font-size: 18px;
+  font-size: 21px;
   margin-left: 130px;
 }
 
 #playlist li .author {
   display: block;
   margin-left: 130px;
+}
+
+#footer {
+  margin-top: 21px;
 }
 
 #footer, #footer a {

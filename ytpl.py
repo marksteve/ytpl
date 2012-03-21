@@ -6,7 +6,6 @@ import os
 import redis
 import requests
 import urllib
-import uuid
 
 
 DEV_SERVER_HOST = 'localhost'
@@ -28,6 +27,10 @@ root_url = root_url.rstrip('/')
 mod_path = os.path.dirname(__file__)
 
 
+def randstr(l=8):
+  return os.urandom(l / 2).encode('hex')
+
+
 class YTPL:
   def __init__(self):
     self.redis = redis.Redis(
@@ -41,56 +44,82 @@ class YTPL:
     return cherrypy.session
 
   @property
-  def fbclient(self):
-    return self.sess.get('fbclient')
+  def req(self):
+    return cherrypy.request
 
   @property
   def user(self):
     return self.sess.get('user')
 
+  def get_fbclient(self):
+    kwargs = {
+      'scope': 'publish_stream',
+      'redirect_uri': root_url + '/fboauth',
+    }
+    access_token = self.sess.get('access_token')
+    if access_token:
+      kwargs['access_token'] = access_token
+    return FBClient(env.get('FB_CLIENT_ID'), env.get('FB_CLIENT_SECRET'), **kwargs)
+
   @cherrypy.expose
   def index(self):
-    t = Template(filename=os.path.join(mod_path, 'index.html'))
-    return t.render(signed_in=hasattr(self.fbclient, 'access_token') and self.user, user=self.user)
+    t = Template(filename=os.path.join(mod_path, 'about.html'))
+    user = self.sess.get('user')
+    return t.render(user=user)
+
+  @cherrypy.expose
+  def default(self, pl_name):
+    t = Template(filename=os.path.join(mod_path, 'playlist.html'))
+    user = self.sess.get('user')
+    is_creator = user and self.redis.get('creator:%s' % pl_name) == user['id']
+    return t.render(user=user, is_creator=is_creator)
 
   @cherrypy.expose
   def fbsignin(self):
-    self.fbclient = FBClient(env.get('FB_CLIENT_ID'), env.get('FB_CLIENT_SECRET'),
-                             'publish_stream', root_url + '/fboauth')
-    raise cherrypy.HTTPRedirect(self.fbclient.get_auth_url())
+    fbclient = self.get_fbclient()
+    raise cherrypy.HTTPRedirect(fbclient.get_auth_url())
+
+  @cherrypy.expose
+  def fbsignout(self):
+    cherrypy.lib.sessions.expire()
+    raise cherrypy.HTTPRedirect('/')
 
   @cherrypy.expose
   def fboauth(self, code):
-    self.fbclient.get_access_token(code)
-    self.user = self.fbclient.graph_request('me')
-    raise cherrypy.HTTPRedirect('/')
+    fbclient = self.get_fbclient()
+    access_token = fbclient.get_access_token(code)
+    self.sess['user'] = fbclient.graph_request('me')
+    self.sess['access_token'] = access_token
+    raise cherrypy.HTTPRedirect('/new')
 
   @cherrypy.expose
   @cherrypy.tools.json_out(on=True)
   def new(self):
+    if not self.user:
+      raise cherrypy.HTTPRedirect('fbsignin')
+
     while True:
-      pl_name = uuid.uuid1().hex[:8]
+      pl_name = randstr(8)
       if not self.redis.exists(pl_name):
         break
 
     self.redis.set('creator:%s' % pl_name, self.user['id'])
 
-    return {
-      'name': pl_name,
-    }
+    raise cherrypy.HTTPRedirect(pl_name)
 
   @cherrypy.expose
   @cherrypy.tools.json_in(on=True)
   @cherrypy.tools.json_out(on=True)
-  def default(self, pl_name, id=None):
-    if self.redis.get('creator:%s' % pl_name) != self.user['id']:
+  def pl(self, pl_name, id=None):
+    if (self.req.method != 'GET' # modify playlist
+        and (not self.user # not signed in
+             or self.redis.get('creator:%s' % pl_name) != self.user['id'])): # not owner
       raise cherrypy.HTTPError(401)
 
-    req = cherrypy.request
     pl_key = 'pl:%s' % pl_name
 
-    if req.method == 'PUT':
-      video = cherrypy.request.json
+    if self.req.method == 'PUT':
+      video = self.req.json
 
       del video['id'] # Don't store in video info
       vid = video['vid']
@@ -111,7 +140,7 @@ class YTPL:
 
       return video
 
-    elif req.method == 'DELETE':
+    elif self.req.method == 'DELETE':
       if id:
         self.redis.lrem(pl_key, id)
       else: # Clear all
@@ -156,7 +185,7 @@ class YTPL:
     results = []
     for e in feed['entry']:
       results.append({
-        'id': uuid.uuid4().hex,
+        'id': randstr(12),
         'vid': e['media$group']['yt$videoid']['$t'],
         'author': e['author'][0]['name']['$t'],
         'title': e['title']['$t'],

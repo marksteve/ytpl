@@ -20,19 +20,23 @@
 <body>
   <div id="ytpl">
     <h1><a href="/">YTPL</a></h1>
-    % if signed_in:
-    <div id=profile>Signed in as: ${user['name']}</div>
+    <div id=profile>
+    % if user:
+      ${user['name']}
+      /
+      <a href="/fbsignout">Signout</a>
+    % else:
+      <a href="/fbsignin">Signin with Facebook</a>
+    % endif
+    </div>
     <div id="player"></div>
+    % if is_creator:
     <div id="search">
-      <input type="text" placeholder="Search">
+      <input type="text" placeholder="Start typing to add entries to your playlist">
       <ul id="results"></ul>
     </div>
-    <ul id="playlist">
-      <li>Your playlist is empty. Start searching to add videos!
-    </ul>
-    % else:
-    <a href="/fbsignin">Sign-in with Facebook</a>
     % endif
+    <ul id="playlist"></ul>
     <div id="footer">
       by <a href="https://twitter.com/themarksteve" target="_blank">@themarksteve</a>
     </div>

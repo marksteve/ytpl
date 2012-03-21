@@ -14,7 +14,7 @@
     Playlist: Backbone.Collection.extend({
       model: YTPL.models.Video,
       url: function() {
-        return '/' + this.plName;
+        return '/pl/' + this.plName;
       },
       parse: function(response) {
         return response.videos;
@@ -45,13 +45,21 @@
   YTPL.views.Search = Backbone.View.extend({
     el: '#search',
     events: {
-      'change input': 'search'
+      'keypress input': 'checkKey'
     },
     initialize: function() {
       this.collection.on('reset', this.showResults, this);
     },
+    checkKey: function(e) {
+      if (e.keyCode == 13) {
+        this.search();
+      } else {
+        clearTimeout(self.keyTimeout);
+        self.keyTimeout = setTimeout(_.bind(this.search, this), 1000);
+      }
+    },
     search: function(e) {
-      var $q = this.$(e.target);
+      var $q = this.$('input');
       var promise = $.ajax({
         url: '/search',
         data: {
@@ -183,17 +191,7 @@
 
   YTPL.Router = Backbone.Router.extend({
     routes: {
-      '': 'index',
       ':plName': 'default'
-    },
-    index: function() {
-      $.ajax({
-        url: '/new',
-        dataType: 'json',
-        success: _.bind(function(response) {
-          this.navigate(response.name, true);
-        }, this)
-      });
     },
     'default': function(plName) {
       results.plName = plName;
@@ -211,5 +209,5 @@
 
 function onYouTubePlayerAPIReady() {
   new YTPL.Router();
-  Backbone.history.start();
+  Backbone.history.start({pushState: true});
 }
