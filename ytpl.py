@@ -21,7 +21,7 @@ if os.path.exists(ENVIRON_FILE):
 else:
   env = os.environ
 
-root_url = env.get('DOTCLOUD_WWW_HTTP_URL', 'http://%s:%d/' % (DEV_SERVER_HOST, DEV_SERVER_PORT))
+root_url = env.get('PROD_SERVER_HOST', 'http://%s:%d/' % (DEV_SERVER_HOST, DEV_SERVER_PORT))
 root_url = root_url.rstrip('/')
 
 mod_path = os.path.dirname(__file__)
