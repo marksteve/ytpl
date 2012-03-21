@@ -38,7 +38,7 @@ class YTPL:
   def __init__(self):
     self.redis = redis.Redis(
       host=env.get('DOTCLOUD_DATA_REDIS_HOST', 'localhost'),
-      password=env.get('DOTCLOUD_DATA_REDIS_PASSWORD', None),
+      password=env.get('DOTCLOUD_DATA_REDIS_PASSWORD'),
       port=int(env.get('DOTCLOUD_DATA_REDIS_PORT', 6379)),
     )
 
@@ -202,7 +202,7 @@ def setup_server():
     'tools.sessions.on': True,
     'tools.sessions.storage_type': 'redis',
     'tools.sessions.host': env.get('DOTCLOUD_DATA_REDIS_HOST', 'localhost'),
-    'tools.sessions.port': env.get('DOTCLOUD_DATA_REDIS_PORT', 6379),
+    'tools.sessions.port': int(env.get('DOTCLOUD_DATA_REDIS_PORT', 6379)),
     'tools.sessions.db': 0,
     'tools.sessions.password': env.get('DOTCLOUD_DATA_REDIS_PASSWORD'),
   })
