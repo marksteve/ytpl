@@ -6,7 +6,7 @@ Right now any user can modify any playlist. I'll add signin with social networks
 ## TODO
 * ~~Start anywhere from playlist~~
 * ~~Playing feedback~~
-* Youtube playlists integration
+* Use sorted sets instead
 * Drag and drop
 * Social integration
 * Playlist locking

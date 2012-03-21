@@ -1,3 +1,4 @@
+from fboauth2 import FBClient
 from mako.template import Template
 import cherrypy
 import json
@@ -21,6 +22,9 @@ if os.path.exists(ENVIRON_FILE):
 else:
   env = os.environ
 
+root_url = env.get('DOTCLOUD_WWW_HTTP_URL', 'http://%s:%d/' % (DEV_SERVER_HOST, DEV_SERVER_PORT))
+root_url = root_url.rstrip('/')
+
 mod_path = os.path.dirname(__file__)
 
 
@@ -31,13 +35,35 @@ class YTPL:
       password=env.get('DOTCLOUD_DATA_REDIS_PASSWORD', None),
       port=int(env.get('DOTCLOUD_DATA_REDIS_PORT', 6379)),
     )
-    self.root_url = env.get('DOTCLOUD_WWW_HTTP_URL',
-                            'http://%s:%d/' % (DEV_SERVER_HOST, DEV_SERVER_PORT))
+
+  @property
+  def sess(self):
+    return cherrypy.session
+
+  @property
+  def fbclient(self):
+    return self.sess.get('fbclient')
+
+  @property
+  def user(self):
+    return self.sess.get('user')
 
   @cherrypy.expose
   def index(self):
     t = Template(filename=os.path.join(mod_path, 'index.html'))
-    return t.render()
+    return t.render(signed_in=hasattr(self.fbclient, 'access_token') and self.user, user=self.user)
+
+  @cherrypy.expose
+  def fbsignin(self):
+    self.fbclient = FBClient(env.get('FB_CLIENT_ID'), env.get('FB_CLIENT_SECRET'),
+                             'publish_stream', root_url + '/fboauth')
+    raise cherrypy.HTTPRedirect(self.fbclient.get_auth_url())
+
+  @cherrypy.expose
+  def fboauth(self, code):
+    self.fbclient.get_access_token(code)
+    self.user = self.fbclient.graph_request('me')
+    raise cherrypy.HTTPRedirect('/')
 
   @cherrypy.expose
   @cherrypy.tools.json_out(on=True)
@@ -46,6 +72,9 @@ class YTPL:
       pl_name = uuid.uuid1().hex[:8]
       if not self.redis.exists(pl_name):
         break
+
+    self.redis.set('creator:%s' % pl_name, self.user['id'])
+
     return {
       'name': pl_name,
     }
@@ -54,6 +83,9 @@ class YTPL:
   @cherrypy.tools.json_in(on=True)
   @cherrypy.tools.json_out(on=True)
   def default(self, pl_name, id=None):
+    if self.redis.get('creator:%s' % pl_name) != self.user['id']:
+      raise cherrypy.HTTPError(401)
+
     req = cherrypy.request
     pl_key = 'pl:%s' % pl_name
 

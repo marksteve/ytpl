@@ -20,6 +20,8 @@
 <body>
   <div id="ytpl">
     <h1><a href="/">YTPL</a></h1>
+    % if signed_in:
+    <div id=profile>Signed in as: ${user['name']}</div>
     <div id="player"></div>
     <div id="search">
       <input type="text" placeholder="Search">
@@ -28,6 +30,9 @@
     <ul id="playlist">
       <li>Your playlist is empty. Start searching to add videos!
     </ul>
+    % else:
+    <a href="/fbsignin">Sign-in with Facebook</a>
+    % endif
     <div id="footer">
       by <a href="https://twitter.com/themarksteve" target="_blank">@themarksteve</a>
     </div>
