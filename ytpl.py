@@ -147,10 +147,10 @@ class YTPL:
       self.redis.set('vid:%s' % vid, '%s:%s' % (vid, json.dumps(video)))
 
       # Get new entry index
-      pos = self.redis.llen(pl_key)
+      pos = self.redis.zcard(pl_key)
 
       # Push to playlist
-      self.redis.rpush(pl_key, id)
+      self.redis.zadd(pl_key, **{id: pos})
 
       video['pos'] = pos
 
@@ -158,9 +158,9 @@ class YTPL:
 
     elif self.req.method == 'DELETE':
       if id:
-        self.redis.lrem(pl_key, id)
+        self.redis.zrem(pl_key, id)
       else: # Clear all
-        self.redis.ltrim(pl_key, 1, -1)
+        self.redis.zremrangebyrank(pl_key, 0, -1)
 
     videos = []
 
@@ -177,7 +177,7 @@ class YTPL:
         vid_infos[vid] = json.loads(info)
 
       # Fill playlist items with vid info
-      for pos, id in enumerate(self.redis.lrange(pl_key, 0, -1)):
+      for pos, id in enumerate(self.redis.zrange(pl_key, 0, -1)):
         vid_info = vid_infos[id_vid[id]]
         vid_info.update({
           'id': id,
