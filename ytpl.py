@@ -88,6 +88,11 @@ class YTPL:
     user = self.sess.get('user')
     return t.render(user=user)
 
+  def _create_pl(self, user_id, pl_name):
+    self.redis.set('creator:%s' % pl_name, user_id)
+    # push playlist name to user's playlists for querying later
+    self.redis.sadd('pls:%s' % user_id, pl_name)
+
   @cherrypy.expose
   def default(self, pl_name):
     t = Template(filename=os.path.join(mod_path, 'playlist.html'))
@@ -96,11 +101,7 @@ class YTPL:
 
     # create if new
     if self.user and not self.redis.exists('pl:%s' % pl_name):
-      self.redis.set(creator_key, self.user['id'])
-
-      # push playlist name to user's playlists for querying later
-      self.redis.sadd(pls_key, pl_name)
-
+      self._create_pl(self.user['id'], pl_name)
       can_edit = True
 
     else:
@@ -123,7 +124,7 @@ class YTPL:
       if not self.redis.exists('pl:%s' % pl_name):
         break
 
-    self.redis.set('creator:%s' % pl_name, self.user['id'])
+    self._create_pl(self.user['id'], pl_name)
 
     raise cherrypy.HTTPRedirect(pl_name)
 
