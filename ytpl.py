@@ -152,10 +152,10 @@ class YTPL:
     elif self.req.method != 'GET':
       raise cherrypy.HTTPError(401)
 
-    if self.req.method == 'PUT':
+    if self.req.method == 'POST':
       video = self.req.json
 
-      del video['id'] # Don't store in video info
+      id = randstr(12)
       vid = video['vid']
 
       # Store vid reference
@@ -170,7 +170,10 @@ class YTPL:
       # Push to playlist
       self.redis.zadd(pl_key, **{id: pos})
 
-      video['pos'] = pos
+      video.update({
+        'id': id,
+        'pos': pos,
+      })
 
       return video
 
@@ -219,7 +222,6 @@ class YTPL:
     results = []
     for e in feed['entry']:
       results.append({
-        'id': randstr(12),
         'vid': e['media$group']['yt$videoid']['$t'],
         'author': e['author'][0]['name']['$t'],
         'title': e['title']['$t'],
