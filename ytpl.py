@@ -4,6 +4,7 @@ import cherrypy
 import cherrys
 import json
 import os
+import random
 import redis
 import requests
 import urllib
@@ -84,9 +85,26 @@ class YTPL:
 
   @cherrypy.expose
   def index(self):
-    t = Template(filename=os.path.join(mod_path, 'about.html'))
+    t = Template(filename=os.path.join(mod_path, 'index.html'))
     user = self.sess.get('user')
     return t.render(user=user)
+
+  @cherrypy.expose
+  def new(self):
+    if not self.user:
+      raise cherrypy.HTTPRedirect('fbsignin')
+
+    while True:
+      pl_name = randstr(8)
+      if not self.redis.exists('pl:%s' % pl_name):
+        break
+
+    raise cherrypy.HTTPRedirect(pl_name)
+
+  @cherrypy.expose
+  def random(self):
+    top_pls = self.redis.zrevrange('plviews', 0, 100)
+    raise cherrypy.HTTPRedirect('/' + random.choice(top_pls))
 
   @cherrypy.expose
   def default(self, pl_name):
@@ -111,26 +129,14 @@ class YTPL:
 
     # Increment views
     viewed_key = 'viewed:%s' % pl_name
-    if not self.sess.get(viewed_key, False):
+    # Should have at least 1 video and only once per user session
+    if self.redis.zcard('pl:%s' % pl_name) > 0 and not self.sess.get(viewed_key, False):
       self.redis.zincrby('plviews', pl_name, 1)
       self.sess[viewed_key] = True
 
     # TODO: Add whitelist editors
 
     return t.render(user=self.user, can_edit=can_edit, playlists=playlists)
-
-  @cherrypy.expose
-  @cherrypy.tools.json_out(on=True)
-  def new(self):
-    if not self.user:
-      raise cherrypy.HTTPRedirect('fbsignin')
-
-    while True:
-      pl_name = randstr(8)
-      if not self.redis.exists('pl:%s' % pl_name):
-        break
-
-    raise cherrypy.HTTPRedirect(pl_name)
 
   @cherrypy.expose
   @cherrypy.tools.json_in(on=True)
