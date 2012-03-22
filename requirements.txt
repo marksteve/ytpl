@@ -1,4 +1,0 @@
-cherrypy
-redis
-mako
-requests
