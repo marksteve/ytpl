@@ -92,13 +92,13 @@ class YTPL:
   def default(self, pl_name):
     t = Template(filename=os.path.join(mod_path, 'playlist.html'))
     creator_key = 'creator:%s' % pl_name
+    pls_key = 'pls:%s' % self.user['id'] if self.user else None
 
     # create if new
     if self.user and not self.redis.exists('pl:%s' % pl_name):
       self.redis.set(creator_key, self.user['id'])
 
       # push playlist name to user's playlists for querying later
-      pls_key = 'pls:%s' % self.user['id']
       self.redis.sadd(pls_key, pl_name)
 
       can_edit = True
@@ -106,7 +106,7 @@ class YTPL:
     else:
       can_edit = self.user and self.redis.get(creator_key) == self.user['id']
 
-    playlists = self.redis.smembers(pls_key) if self.user else []
+    playlists = self.redis.smembers(pls_key) if pls_key else []
 
     # TODO: Add whitelist editors
 
