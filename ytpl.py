@@ -92,18 +92,23 @@ class YTPL:
   def default(self, pl_name):
     t = Template(filename=os.path.join(mod_path, 'playlist.html'))
     creator_key = 'creator:%s' % pl_name
+    pls_key = 'pls:%s' % self.user['id']
 
     # create if new
     if self.user and not self.redis.exists('pl:%s' % pl_name):
       self.redis.set(creator_key, self.user['id'])
+      # push playlist name to user's playlists for querying later
+      self.redis.sadd(pls_key, pl_name)
       can_edit = True
 
     else:
       can_edit = self.user and self.redis.get(creator_key) == self.user['id']
 
+    playlists = self.redis.smembers(pls_key)
+
     # TODO: Add whitelist editors
 
-    return t.render(user=self.user, can_edit=can_edit)
+    return t.render(user=self.user, can_edit=can_edit, playlists=playlists)
 
   @cherrypy.expose
   @cherrypy.tools.json_out(on=True)

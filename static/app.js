@@ -190,6 +190,19 @@
     }
   });
 
+  YTPL.views.Playlists = Backbone.View.extend({
+    el: '#playlists',
+    events: {
+      'change select': 'switchPlaylist'
+    },
+    initialize: function() {
+      this.$('select').val(this.options.currPlaylist);
+    },
+    switchPlaylist: function(e) {
+      location.href = '/' + this.$(e.target).val();
+    }
+  });
+
   YTPL.results = new YTPL.collections.Results();
   YTPL.playlist = new YTPL.collections.Playlist();
 
@@ -198,10 +211,14 @@
       ':plName': 'default'
     },
     'default': function(plName) {
+      new YTPL.views.Playlists({currPlaylist: plName});
+
       YTPL.results.plName = plName;
-      new YTPL.views.Search({collection: YTPL.results});
       YTPL.playlist.plName = plName;
+
+      new YTPL.views.Search({collection: YTPL.results});
       new YTPL.views.Playlist({collection: YTPL.playlist});
+
       YTPL.playlist.fetch({success: function() {
         YTPL.player = new YTPL.views.Player({collection: YTPL.playlist});
         YTPL.player.setIframe();
@@ -212,6 +229,6 @@
 })(jQuery);
 
 function onYouTubePlayerAPIReady() {
-  new YTPL.Router();
+  YTPL.router = new YTPL.Router();
   Backbone.history.start({pushState: true});
 }

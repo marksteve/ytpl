@@ -29,6 +29,15 @@
       ${user['name']}
       /
       <a href="/fbsignout">Signout</a>
+      % if playlists:
+      <div id=playlists>
+      <select>
+        % for playlist in playlists:
+        <option value="${playlist}">${playlist}
+        % endfor
+      </select>
+      </div>
+      % endif
     % else:
       <a href="/fbsignin">Signin with Facebook</a>
     % endif
