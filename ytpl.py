@@ -110,7 +110,10 @@ class YTPL:
     playlists = self.redis.smembers(pls_key) if pls_key else []
 
     # Increment views
-    self.redis.zincrby('plviews', pl_name, 1)
+    viewed_key = 'viewed:%s' % pl_name
+    if not self.sess.get(viewed_key, False):
+      self.redis.zincrby('plviews', pl_name, 1)
+      self.sess[viewed_key] = True
 
     # TODO: Add whitelist editors
 
