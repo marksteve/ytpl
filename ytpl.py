@@ -196,7 +196,7 @@ class YTPL:
 
       # Fill playlist items with vid info
       for pos, id in enumerate(self.redis.zrange(pl_key, 0, -1)):
-        vid_info = vid_infos[id_vid[id]]
+        vid_info = dict(vid_infos[id_vid[id]])
         vid_info.update({
           'id': id,
           'pos': pos,
