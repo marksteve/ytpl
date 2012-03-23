@@ -32,19 +32,22 @@
     % if user:
       ${user['name']}
       &mdash;
-      <a href="/fbsignout">Signout</a>
-      % if playlists:
+      <a href="/fbsignout" class="button">Signout</a>
       <div id=playlists>
-      <select>
-        <option value=""></option>
-        % for playlist in playlists:
-        <option value="${playlist}">${playlist}
-        % endfor
-      </select>
+        % if playlists:
+        <select>
+          <option value=""></option>
+          % for playlist in playlists:
+          <option value="${playlist}">${playlist}
+          % endfor
+        </select>
+        % endif
+        <button class="button share">Share</button>
+        <a href="/new" class="button">New</a>
+        <a href="/random" class="button">Random</a>
       </div>
-      % endif
     % else:
-      <a href="/fbsignin?pl_name=${pl_name}">Signin with Facebook</a>
+      <a href="/fbsignin?pl_name=${pl_name}" class="button">Signin with Facebook</a>
     % endif
     </div>
     <div id="player"></div>

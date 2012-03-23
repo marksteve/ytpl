@@ -73,7 +73,11 @@ body {
   text-shadow: #000 2px 1px 0;
 }
 
-body, input, select {
+select {
+  font-size: 100%;
+}
+
+body, input, select, button {
   font: 14px/1.5 sans-serif;
 }
 
@@ -91,8 +95,23 @@ a {
   color: white;
 }
 
-input {
+input, button {
   border: 0;
+}
+
+button {
+  cursor: pointer;
+}
+
+.button {
+  background-color: white;
+  box-shadow: #000 5px 5px 0;
+  color: #445;
+  display: inline-block;
+  font-weight: bold;
+  padding: 0 5px;
+  text-decoration: none;
+  text-shadow: none;
 }
 
 #ytpl {
@@ -108,32 +127,24 @@ input {
   font-size: 21px;
   text-align: center;
 }
-#actions a {
-  background-color: white;
-  box-shadow: #000 5px 5px 0;
-  color: #445;
-  display: inline-block;
-  font-weight: bold;
-  padding: 5px;
-  text-decoration: none;
-  text-shadow: none;
-}
 
 #profile {
   position: absolute;
   top: 20px;
   right: 10px;
+  line-height: 2;
   text-align: right;
 }
 
 #profile a {
+  line-height: 1.5;
   text-decoration: none;
 }
 
 #search input {
   font-size: 24px;
   padding: 5px;
-  width: 100%;
+  width: 470px;
 }
 
 #results {

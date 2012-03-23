@@ -193,13 +193,29 @@
   YTPL.views.Playlists = Backbone.View.extend({
     el: '#playlists',
     events: {
-      'change select': 'switchPlaylist'
+      'change select': 'switchPlaylist',
+      'click .share': 'share'
     },
     initialize: function() {
       this.$('select').val(this.options.currPlaylist);
     },
     switchPlaylist: function(e) {
       location.href = '/' + this.$(e.target).val();
+    },
+    share: function(e) {
+      e.preventDefault();
+      var $button = $(e.target);
+      var promise = $.ajax({url: '/share/' + this.options.currPlaylist});
+      $button.html('Sharing&hellip;').prop('disabled', true);
+      promise.done(function() {
+        $button.html('Shared!');
+        setTimeout(function() {
+          $button.html('Share').prop('disabled', false);
+        }, 3000);
+      });
+      promise.fail(function(){
+        $button.html('Share failed!').prop('disabled', false);
+      });
     }
   });
 
