@@ -109,6 +109,32 @@ class YTPL:
     top_pls = self.redis.zrevrange('plviews', 0, 100)
     raise cherrypy.HTTPRedirect('/' + random.choice(top_pls))
 
+  def _get_videos(self, pl_name, start=0, end=-1):
+    videos = []
+
+    # Get references
+    id_vid = self.redis.hgetall('id_vid:%s' % pl_name)
+    vid_infos = {}
+
+    # Get vids from references
+    vids = ['vid:%s' % vid for vid in id_vid.values()]
+    if vids:
+      # Get vid info
+      for vid_info in self.redis.mget(vids):
+        vid, info = vid_info.split(':', 1)
+        vid_infos[vid] = json.loads(info)
+
+      # Fill playlist items with vid info
+      for pos, id in enumerate(self.redis.zrange('pl:%s' % pl_name, start, end)):
+        vid_info = dict(vid_infos[id_vid[id]])
+        vid_info.update({
+          'id': id,
+          'pos': pos,
+        })
+        videos.append(vid_info)
+
+    return videos
+
   @cherrypy.expose
   def default(self, pl_name):
     t = Template(filename=os.path.join(mod_path, 'playlist.html'))
@@ -120,7 +146,7 @@ class YTPL:
 
     # Open Graph
     og = {}
-    videos = self._get_videos(pl_name)
+    videos = self._get_videos(pl_name, end=9)
     if videos:
       vid_info = videos[0]
       og.update({
@@ -129,7 +155,7 @@ class YTPL:
         'image': vid_info['thumbnail']['url'],
         'title': title,
         'description': '\n'.join(["%d. %s - %s" % (i + 1, v['title'], v['author'])
-                                 for i, v in enumerate(videos)]),
+                                 for i, v in enumerate(videos)])[:250] + '...',
       })
 
     # Get permissions
@@ -164,32 +190,6 @@ class YTPL:
 
     return t.render(user=self.user, pl_name=pl_name, og=og, title=title, can_edit=can_edit,
                     playlists=playlists)
-
-  def _get_videos(self, pl_name):
-    videos = []
-
-    # Get references
-    id_vid = self.redis.hgetall('id_vid:%s' % pl_name)
-    vid_infos = {}
-
-    # Get vids from references
-    vids = ['vid:%s' % vid for vid in id_vid.values()]
-    if vids:
-      # Get vid info
-      for vid_info in self.redis.mget(vids):
-        vid, info = vid_info.split(':', 1)
-        vid_infos[vid] = json.loads(info)
-
-      # Fill playlist items with vid info
-      for pos, id in enumerate(self.redis.zrange('pl:%s' % pl_name, 0, -1)):
-        vid_info = dict(vid_infos[id_vid[id]])
-        vid_info.update({
-          'id': id,
-          'pos': pos,
-        })
-        videos.append(vid_info)
-
-    return videos
 
   @cherrypy.expose
   @cherrypy.tools.json_in(on=True)
