@@ -79,7 +79,11 @@ class YTPL:
     if state:
       raise cherrypy.HTTPRedirect('/' + state)
     else:
-      raise cherrypy.HTTPRedirect('/new')
+      pl_name = self.redis.srandmember('pls:%s' % self.user['id'])
+      if pl_name:
+        raise cherrypy.HTTPRedirect('/' + pl_name)
+      else:
+        raise cherrypy.HTTPRedirect('/new')
 
   @cherrypy.expose
   def fbsignout(self):
