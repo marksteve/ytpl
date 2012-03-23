@@ -209,12 +209,14 @@
       $button.html('Sharing&hellip;').prop('disabled', true);
       promise.done(function() {
         $button.html('Shared!');
+      });
+      promise.fail(function(){
+        $button.html('Share failed!');
+      });
+      promise.always(function() {
         setTimeout(function() {
           $button.html('Share').prop('disabled', false);
         }, 3000);
-      });
-      promise.fail(function(){
-        $button.html('Share failed!').prop('disabled', false);
       });
     }
   });
