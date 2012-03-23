@@ -22,6 +22,7 @@ ENVIRON_FILE = '/home/dotcloud/environment.json'
 if os.path.exists(ENVIRON_FILE):
   with open(ENVIRON_FILE) as f:
     env = json.load(f)
+    cherrypy.config.update({'environment': 'production'})
 else:
   env = os.environ
 
