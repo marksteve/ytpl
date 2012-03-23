@@ -12,7 +12,7 @@ setup(
     'console_scripts': ['ytpl = ytpl:start'],
   },
   dependency_links=[
-    'https://github.com/marksteve/fboauth2/tarball/master#egg=fboauth2',
+    'https://github.com/marksteve/fboauth2/tarball/master#egg=fboauth2-0.0.2',
   ],
   install_requires=[
     'cherrypy',
