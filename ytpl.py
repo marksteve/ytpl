@@ -253,7 +253,7 @@ class YTPL:
   @cherrypy.expose
   def share(self, pl_name, message=None):
     if self.redis.zcard('pl:%s' % pl_name) > 0:
-      data = {'link': 'http://ytpl.marksteve.me/marksteve'}
+      data = {'link': '%s/%s' % (root_url, pl_name)}
       if message:
         data['message'] = message
       fbclient = self.get_fbclient()
