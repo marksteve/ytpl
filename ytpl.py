@@ -56,14 +56,14 @@ class YTPL:
     return self.sess.get('user')
 
   def get_fbclient(self):
-    kwargs = {
+    fbclient_kwargs = {
       'scope': 'publish_stream',
       'redirect_uri': root_url + '/fboauth',
     }
     access_token = self.sess.get('access_token')
     if access_token:
-      kwargs['access_token'] = access_token
-    return FBClient(env.get('FB_CLIENT_ID'), env.get('FB_CLIENT_SECRET'), **kwargs)
+      fbclient_kwargs['access_token'] = access_token
+    return FBClient(env.get('FB_CLIENT_ID'), env.get('FB_CLIENT_SECRET'), **fbclient_kwargs)
 
   @cherrypy.expose
   def fbsignin(self, pl_name=None):
@@ -115,18 +115,41 @@ class YTPL:
     creator_key = 'creator:%s' % pl_name
     pls_key = 'pls:%s' % self.user['id'] if self.user else None
 
-    # create if new
-    if self.user and not self.redis.exists('pl:%s' % pl_name):
-      # set creator id
-      self.redis.set(creator_key, self.user['id'])
+    # Title
+    title = 'YTPL - %s' % pl_name
 
-      # push playlist name to user's playlists for querying later
-      self.redis.sadd(pls_key, pl_name)
+    # Open Graph
+    og = {}
+    videos = self._get_videos(pl_name)
+    if videos:
+      vid_info = videos[0]
+      og.update({
+        'type': 'website',
+        'url': '%s/%s' % (root_url, pl_name),
+        'image': vid_info['thumbnail']['url'],
+        'title': title,
+        'description': '\n'.join(["%d. %s - %s" % (i + 1, v['title'], v['author'])
+                                 for i, v in enumerate(videos)]),
+      })
 
-      can_edit = True
-
-    else:
+    # Get permissions
+    if self.redis.exists('pl:%s' % pl_name):
       can_edit = self.user and self.redis.get(creator_key) == self.user['id']
+
+    # create if new
+    else:
+
+      if self.user:
+        # set creator id
+        self.redis.set(creator_key, self.user['id'])
+
+        # push playlist name to user's playlists for querying later
+        self.redis.sadd(pls_key, pl_name)
+
+        can_edit = True
+
+      else:
+        raise cherrypy.HTTPRedirect('/fbsignin?pl_name=%s' % pl_name)
 
     playlists = self.redis.smembers(pls_key) if pls_key else []
 
@@ -139,7 +162,34 @@ class YTPL:
 
     # TODO: Add whitelist editors
 
-    return t.render(user=self.user, pl_name=pl_name, can_edit=can_edit, playlists=playlists)
+    return t.render(user=self.user, pl_name=pl_name, og=og, title=title, can_edit=can_edit,
+                    playlists=playlists)
+
+  def _get_videos(self, pl_name):
+    videos = []
+
+    # Get references
+    id_vid = self.redis.hgetall('id_vid:%s' % pl_name)
+    vid_infos = {}
+
+    # Get vids from references
+    vids = ['vid:%s' % vid for vid in id_vid.values()]
+    if vids:
+      # Get vid info
+      for vid_info in self.redis.mget(vids):
+        vid, info = vid_info.split(':', 1)
+        vid_infos[vid] = json.loads(info)
+
+      # Fill playlist items with vid info
+      for pos, id in enumerate(self.redis.zrange('pl:%s' % pl_name, 0, -1)):
+        vid_info = dict(vid_infos[id_vid[id]])
+        vid_info.update({
+          'id': id,
+          'pos': pos,
+        })
+        videos.append(vid_info)
+
+    return videos
 
   @cherrypy.expose
   @cherrypy.tools.json_in(on=True)
@@ -186,33 +236,25 @@ class YTPL:
       else: # Clear all
         self.redis.zremrangebyrank(pl_key, 0, -1)
 
-    videos = []
+      return
 
-    # Get references
-    id_vid = self.redis.hgetall('id_vid:%s' % pl_name)
-    vid_infos = {}
-
-    # Get vids from references
-    vids = ['vid:%s' % vid for vid in id_vid.values()]
-    if vids:
-      # Get vid info
-      for vid_info in self.redis.mget(vids):
-        vid, info = vid_info.split(':', 1)
-        vid_infos[vid] = json.loads(info)
-
-      # Fill playlist items with vid info
-      for pos, id in enumerate(self.redis.zrange(pl_key, 0, -1)):
-        vid_info = dict(vid_infos[id_vid[id]])
-        vid_info.update({
-          'id': id,
-          'pos': pos,
-        })
-        videos.append(vid_info)
+    videos = self._get_videos(pl_name)
 
     return {
       'name': pl_name,
       'videos': videos,
     }
+
+  @cherrypy.expose
+  def share(self, pl_name, message=None):
+    if self.redis.zcard('pl:%s' % pl_name) > 0:
+      data = {'link': 'http://ytpl.marksteve.me/marksteve'}
+      if message:
+        data['message'] = message
+      fbclient = self.get_fbclient()
+      fbclient.graph_request('me/links', method='post', data=data)
+    else:
+      raise cherrypy.HTTPError(400, 'Playlist is empty')
 
   @cherrypy.expose
   @cherrypy.tools.json_out(on=True)

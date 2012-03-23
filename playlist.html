@@ -1,6 +1,9 @@
 <html>
 <head>
-  <title>YTPL</title>
+  % for prop, cont in og.items():
+  <meta property="og:${prop}" content="${cont}">
+  % endfor
+  <title>${title}</title>
   <link href="/static/styles.css" rel="stylesheet">
   <link rel="shortcut icon" href="/static/favicon.ico">
   <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
