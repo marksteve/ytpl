@@ -130,7 +130,8 @@ class YTPL:
         vid_infos[vid] = json.loads(info)
 
       # Fill playlist items with vid info
-      for pos, id in enumerate(self.redis.zrange('pl:%s' % pl_name, start, end)):
+      for id, pos in self.redis.zrange('pl:%s' % pl_name, start, end, withscores=True):
+        pos = int(pos)
         vid_info = dict(vid_infos[id_vid[id]])
         vid_info.update({
           'id': id,
@@ -237,8 +238,19 @@ class YTPL:
 
     elif self.req.method == 'DELETE':
       if id:
+        start = self.redis.zrank(pl_key, id)
         self.redis.zrem(pl_key, id)
-      else: # Clear all
+
+        # Re-sort items below the deleted one
+        # FIXME: Race condition!
+        updated = {}
+        for id, pos in self.redis.zrange(pl_key, start, -1, withscores=True):
+          updated[id] = pos - 1
+        if updated:
+          self.redis.zadd(pl_key, **updated)
+
+      # Clear all
+      else:
         self.redis.zremrangebyrank(pl_key, 0, -1)
 
       return
