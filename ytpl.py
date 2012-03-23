@@ -66,22 +66,25 @@ class YTPL:
     return FBClient(env.get('FB_CLIENT_ID'), env.get('FB_CLIENT_SECRET'), **kwargs)
 
   @cherrypy.expose
-  def fbsignin(self):
+  def fbsignin(self, pl_name=None):
     fbclient = self.get_fbclient()
-    raise cherrypy.HTTPRedirect(fbclient.get_auth_url())
+    raise cherrypy.HTTPRedirect(fbclient.get_auth_url(state=pl_name))
+
+  @cherrypy.expose
+  def fboauth(self, code, state=None):
+    fbclient = self.get_fbclient()
+    access_token = fbclient.get_access_token(code)
+    self.sess['user'] = fbclient.graph_request('me')
+    self.sess['access_token'] = access_token
+    if state:
+      raise cherrypy.HTTPRedirect('/' + state)
+    else:
+      raise cherrypy.HTTPRedirect('/new')
 
   @cherrypy.expose
   def fbsignout(self):
     cherrypy.lib.sessions.expire()
     raise cherrypy.HTTPRedirect('/')
-
-  @cherrypy.expose
-  def fboauth(self, code):
-    fbclient = self.get_fbclient()
-    access_token = fbclient.get_access_token(code)
-    self.sess['user'] = fbclient.graph_request('me')
-    self.sess['access_token'] = access_token
-    raise cherrypy.HTTPRedirect('/new')
 
   @cherrypy.expose
   def index(self):
@@ -136,7 +139,7 @@ class YTPL:
 
     # TODO: Add whitelist editors
 
-    return t.render(user=self.user, can_edit=can_edit, playlists=playlists)
+    return t.render(user=self.user, pl_name=pl_name, can_edit=can_edit, playlists=playlists)
 
   @cherrypy.expose
   @cherrypy.tools.json_in(on=True)
