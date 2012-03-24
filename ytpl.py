@@ -227,7 +227,7 @@ class YTPL:
       pos = self.redis.zcard(pl_key)
 
       # Push to playlist
-      self.redis.zadd(pl_key, **{id: pos})
+      self.redis.zadd(pl_key, id, pos)
 
       video.update({
         'id': id,
@@ -242,12 +242,22 @@ class YTPL:
         self.redis.zrem(pl_key, id)
 
         # Re-sort items below the deleted one
-        # FIXME: Race condition!
-        updated = {}
-        for id, pos in self.redis.zrange(pl_key, start, -1, withscores=True):
-          updated[id] = pos - 1
-        if updated:
-          self.redis.zadd(pl_key, **updated)
+        with self.redis.pipeline() as pipe:
+          while True:
+            try:
+              updated = {}
+              pipe.watch(pl_key)
+              for id, pos in pipe.zrange(pl_key, start, -1, withscores=True):
+                updated[id] = pos - 1
+              pipe.multi()
+              if updated:
+                for id, pos in updated.items():
+                  pipe.zadd(pl_key, id, pos)
+              pipe.execute()
+              break
+            except redis.exceptions.WatchError:
+              # Retry
+              continue
 
       # Clear all
       else:
