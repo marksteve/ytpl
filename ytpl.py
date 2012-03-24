@@ -247,8 +247,8 @@ class YTPL:
             try:
               updated = {}
               pipe.watch(pl_key)
-              for id, pos in pipe.zrange(pl_key, start, -1, withscores=True):
-                updated[id] = pos - 1
+              for i, id in enumerate(pipe.zrange(pl_key, start, -1)):
+                updated[id] = start + i
               pipe.multi()
               if updated:
                 for id, pos in updated.items():

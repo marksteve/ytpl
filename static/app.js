@@ -113,6 +113,7 @@
       YTPL.player.play();
     },
     'delete': function(e) {
+      // TODO: Fix positions after delete
       e.preventDefault();
       this.model.destroy({
         success: _.bind(function(model) {
