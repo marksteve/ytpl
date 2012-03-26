@@ -263,14 +263,7 @@ class YTPL:
       else:
         self.redis.zremrangebyrank(pl_key, 0, -1)
 
-      return
-
-    videos = self._get_videos(pl_name)
-
-    return {
-      'name': pl_name,
-      'videos': videos,
-    }
+    return self._get_videos(pl_name)
 
   @cherrypy.expose
   def share(self, pl_name, message=None):

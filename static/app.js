@@ -15,9 +15,6 @@
       model: YTPL.models.Video,
       url: function() {
         return '/pl/' + this.plName;
-      },
-      parse: function(response) {
-        return response.videos;
       }
     })
   });
@@ -81,8 +78,10 @@
           });
           $results.append(view.render().el);
         }, this);
+        $results.show();
       } else {
         this.$('input', this.$el).val('');
+        $results.hide();
       }
     }
   });
@@ -113,11 +112,14 @@
       YTPL.player.play();
     },
     'delete': function(e) {
-      // TODO: Fix positions after delete
       e.preventDefault();
       this.model.destroy({
-        success: _.bind(function(model) {
+        success: _.bind(function(model, response) {
           this.remove();
+          _(response).each(function(video) {
+            // Update video pos
+            YTPL.playlist.get(video.id).set('pos', video.pos);
+          });
         }, this)
       });
     }
@@ -134,6 +136,7 @@
         this.$el.empty();
       }
       collection.each(this.addVideo, this);
+      this.$el.sortable().disableSelection();
     },
     addVideo: function(model) {
       if (this.collection.length == 1) {

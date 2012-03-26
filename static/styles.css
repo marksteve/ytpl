@@ -148,9 +148,14 @@ button {
 }
 
 #results {
-  background-color: #334;
+  background-color: #556;
+  box-shadow: #000 0 0 10px 0;
   position: absolute;
-  width: 480px;
+  padding: 0 10px;
+  width: 460px;
+  height: 300px;
+  overflow-y: auto;
+  display: none;
 }
 
 #results li {
@@ -159,32 +164,37 @@ button {
 }
 
 #results li:hover {
-  background-color: #445;
+  background-color: #667;
 }
 
 #results li img {
   float: left;
-  width: 120px;
+  width: 80px;
 }
 
 #results li .title {
-  font-size: 21px;
-  margin-left: 130px;
+  font-size: 14px;
+  font-weight: bold;
 }
 
 #results li .author {
+  font-size: 12px;
   display: block;
-  margin-left: 130px;
+}
+
+#results li .title,
+#results li .author {
+  margin-left: 90px;
 }
 
 #playlist {
-  border: 5px #445 solid;
+  border: 1px #445 solid;
   margin-bottom: 21px;
 }
 
 #playlist li {
   padding: 10px;
-  border-top: 5px #445 solid;
+  border-top: 1px #445 solid;
 }
 
 #playlist li:first-child {
