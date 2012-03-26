@@ -148,7 +148,9 @@
         this.$el.empty();
       }
       collection.each(this.addVideo, this);
-      this.$el.sortable().disableSelection();
+      if (YTPL.canEdit) {
+        this.$el.sortable().disableSelection();
+      }
     },
     addVideo: function(model) {
       if (this.collection.length == 1) {
