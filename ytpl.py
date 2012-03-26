@@ -197,6 +197,24 @@ class YTPL:
     return t.render(user=self.user, pl_name=pl_name, og=og, title=title, can_edit=can_edit,
                     playlists=playlists)
 
+  def _resort_videos(self, pl_key):
+    with self.redis.pipeline() as pipe:
+      while True:
+        try:
+          updated = {}
+          pipe.watch(pl_key)
+          for pos, id in enumerate(pipe.zrange(pl_key, 0, -1)):
+            updated[id] = pos
+          pipe.multi()
+          if updated:
+            for id, pos in updated.items():
+              pipe.zadd(pl_key, id, pos)
+          pipe.execute()
+          break
+        except redis.exceptions.WatchError:
+          # Retry
+          continue
+
   @cherrypy.expose
   @cherrypy.tools.json_in(on=True)
   @cherrypy.tools.json_out(on=True)
@@ -236,31 +254,20 @@ class YTPL:
 
       return video
 
+    elif self.req.method == 'PUT':
+      video = self.req.json
+      old_pos = self.redis.zrank(pl_key, id)
+      new_pos = int(video['pos'])
+      asc = new_pos - old_pos > 0
+      self.redis.zadd(pl_key, id, float(new_pos + (0.5 if asc else -0.5)))
+      self._resort_videos(pl_key)
+
     elif self.req.method == 'DELETE':
       if id:
-        start = self.redis.zrank(pl_key, id)
         self.redis.zrem(pl_key, id)
-
-        # Re-sort items below the deleted one
-        with self.redis.pipeline() as pipe:
-          while True:
-            try:
-              updated = {}
-              pipe.watch(pl_key)
-              for i, id in enumerate(pipe.zrange(pl_key, start, -1)):
-                updated[id] = start + i
-              pipe.multi()
-              if updated:
-                for id, pos in updated.items():
-                  pipe.zadd(pl_key, id, pos)
-              pipe.execute()
-              break
-            except redis.exceptions.WatchError:
-              # Retry
-              continue
-
-      # Clear all
+        self._resort_videos(pl_key)
       else:
+        # Clear all
         self.redis.zremrangebyrank(pl_key, 0, -1)
 
     return self._get_videos(pl_name)

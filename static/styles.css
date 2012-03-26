@@ -193,6 +193,7 @@ button {
 }
 
 #playlist li {
+  background-color: #334;
   padding: 10px;
   border-top: 1px #445 solid;
 }

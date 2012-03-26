@@ -12,9 +12,18 @@
       model: YTPL.models.Video
     }),
     Playlist: Backbone.Collection.extend({
+      initialize: function() {
+        _.bindAll(this, 'updateVideo');
+      },
       model: YTPL.models.Video,
       url: function() {
         return '/pl/' + this.plName;
+      },
+      comparator: function(model) {
+        return model.get('pos');
+      },
+      updateVideo: function(video) {
+        this.get(video.id).set(video);
       }
     })
   });
@@ -100,6 +109,9 @@
       '<h3 class="title"><%= title %></h3>' +
       '<span class="author"><%= author %></span>',
     render: function() {
+      if (this.model.id) {
+        this.$el.attr('id', this.model.id);
+      }
       this.$el.html(_.template(this.template, this.model.toJSON()));
       if (!YTPL.canEdit) {
         // Remove delete button for non editors
@@ -116,10 +128,7 @@
       this.model.destroy({
         success: _.bind(function(model, response) {
           this.remove();
-          _(response).each(function(video) {
-            // Update video pos
-            YTPL.playlist.get(video.id).set('pos', video.pos);
-          });
+          _(response).each(YTPL.playlist.updateVideo);
         }, this)
       });
     }
@@ -127,6 +136,9 @@
 
   YTPL.views.Playlist = Backbone.View.extend({
     el: '#playlist',
+    events: {
+      'sortupdate': 'sort'
+    },
     initialize: function() {
       this.collection.on('add', this.addVideo, this);
       this.collection.on('reset', this.addVideos, this);
@@ -146,6 +158,19 @@
         model: model
       });
       this.$el.append(model.view.render().el);
+    },
+    sort: function(e, ui) {
+      var $video = ui.item;
+      var id = $video.attr('id');
+      var pos = _(this.$el.sortable('toArray')).indexOf(id);
+      var video = this.collection.get(id);
+      video.save({id: id, pos: pos}, {
+        success: _.bind(function(model, response) {
+          video.clear(); // save applies changes to the model
+          video.set('id', id); // but keep id to be able to update
+          _(response).each(YTPL.playlist.updateVideo);
+        }, this)
+      });
     }
   });
 
@@ -170,6 +195,7 @@
       this.play();
     },
     play: function() {
+      this.collection.sort({silent: true});
       var video = this.collection.at(this.pos);
       if (video) {
         this.ytPlayer.loadVideoById(video.get('vid'));
