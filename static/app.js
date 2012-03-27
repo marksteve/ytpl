@@ -54,6 +54,7 @@
       'keyup input': 'checkKey',
       'blur input': function() {
         this.$('input').val('');
+        this.$('#results').hide();
       }
     },
     initialize: function() {
@@ -100,7 +101,7 @@
       }
     },
     showResults: function(collection) {
-      var $results = this.$('#results', this.$el).empty();
+      var $results = this.$('#results').empty();
       if (this.$('input').val() && collection.length > 0) {
         collection.each(function(model) {
           var view = new YTPL.views.Result({
