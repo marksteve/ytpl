@@ -51,7 +51,10 @@
   YTPL.views.Search = Backbone.View.extend({
     el: '#search',
     events: {
-      'keypress input': 'checkKey'
+      'keyup input': 'checkKey',
+      'blur input': function() {
+        this.$('input').val('');
+      }
     },
     initialize: function() {
       this.collection.on('reset', this.showResults, this);
@@ -60,39 +63,45 @@
       if (e.keyCode == 13) {
         this.search();
       } else {
+        var q = this.$('input').val();
         clearTimeout(self.keyTimeout);
-        self.keyTimeout = setTimeout(_.bind(this.search, this), 1000);
+        if (q) {
+          self.keyTimeout = setTimeout(_.bind(this.search, this), 1000);
+        } else {
+          this.collection.reset([]);
+        }
       }
     },
     search: function(e) {
-      var $q = this.$('input');
+      var q = this.$('input').val();
       var ytSearchURL = 'https://gdata.youtube.com/feeds/api/videos?orderby=relevance&max-results=10&v=2&alt=json';
-      var promise = $.ajax({
-        url: ytSearchURL,
-        data: {
-          q: $q.val()
-        },
-        dataType: 'json'
-      });
-
-      promise.done(_.bind(function(response) {
-        var results = _(response.feed.entry).map(function(e) {
-          var thumbnail = _(e.media$group.media$thumbnail).find(function(t) {
-            return t.yt$name == 'hqdefault';
-          });
-          return {
-            vid: e.media$group.yt$videoid.$t,
-            author: e.author[0].name.$t,
-            title: e.title.$t,
-            thumbnail: thumbnail
-          };
+      if (q) {
+        YTPL.promise = $.ajax({
+          url: ytSearchURL,
+          data: {
+            q: q
+          },
+          dataType: 'json'
         });
-        this.collection.reset(results);
-      }, this));
+        YTPL.promise.done(_.bind(function(response) {
+          var results = _(response.feed.entry).map(function(e) {
+            var thumbnail = _(e.media$group.media$thumbnail).find(function(t) {
+              return t.yt$name == 'hqdefault';
+            });
+            return {
+              vid: e.media$group.yt$videoid.$t,
+              author: e.author[0].name.$t,
+              title: e.title.$t,
+              thumbnail: thumbnail
+            };
+          });
+          this.collection.reset(results);
+        }, this));
+      }
     },
     showResults: function(collection) {
       var $results = this.$('#results', this.$el).empty();
-      if (collection.length > 0) {
+      if (this.$('input').val() && collection.length > 0) {
         collection.each(function(model) {
           var view = new YTPL.views.Result({
             model: model
