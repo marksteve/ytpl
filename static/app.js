@@ -137,34 +137,37 @@
   YTPL.views.Playlist = Backbone.View.extend({
     el: '#playlist',
     events: {
-      'sortupdate': 'sort'
+      'sortupdate': 'sort',
+      'click .share': 'share'
     },
     initialize: function() {
       this.collection.on('add', this.addVideo, this);
       this.collection.on('reset', this.addVideos, this);
     },
     addVideos: function(collection) {
+      var $ul = this.$('ul');
       if (this.collection.length > 0) {
-        this.$el.empty();
+        $ul.empty();
       }
       collection.each(this.addVideo, this);
       if (YTPL.canEdit) {
-        this.$el.sortable().disableSelection();
+        $ul.sortable().disableSelection();
       }
     },
     addVideo: function(model) {
+      var $ul = this.$('ul');
       if (this.collection.length == 1) {
-        this.$el.empty();
+        $ul.empty();
       }
       model.view = new YTPL.views.Video({
         model: model
       });
-      this.$el.append(model.view.render().el);
+      $ul.append(model.view.render().el);
     },
     sort: function(e, ui) {
       var $video = ui.item;
       var id = $video.attr('id');
-      var pos = _(this.$el.sortable('toArray')).indexOf(id);
+      var pos = _(this.$('ul').sortable('toArray')).indexOf(id);
       var video = this.collection.get(id);
       video.save({id: id, pos: pos}, {
         success: _.bind(function(model, response) {
@@ -172,6 +175,23 @@
           video.set('id', id); // but keep id to be able to update
           _(response).each(YTPL.playlist.updateVideo);
         }, this)
+      });
+    },
+    share: function(e) {
+      e.preventDefault();
+      var $button = $(e.target);
+      var promise = $.ajax({url: '/share/' + this.collection.plName});
+      $button.html('Sharing&hellip;').prop('disabled', true);
+      promise.done(function() {
+        $button.html('Shared!');
+      });
+      promise.fail(function(){
+        $button.html('Share failed!');
+      });
+      promise.always(function() {
+        setTimeout(function() {
+          $button.html('Share').prop('disabled', false);
+        }, 3000);
       });
     }
   });
@@ -225,31 +245,13 @@
   YTPL.views.Playlists = Backbone.View.extend({
     el: '#playlists',
     events: {
-      'change select': 'switchPlaylist',
-      'click .share': 'share'
-    },
-    initialize: function() {
-      this.$('select').val(this.options.currPlaylist);
+      'change select': 'switchPlaylist'
     },
     switchPlaylist: function(e) {
-      location.href = '/' + this.$(e.target).val();
-    },
-    share: function(e) {
-      e.preventDefault();
-      var $button = $(e.target);
-      var promise = $.ajax({url: '/share/' + this.options.currPlaylist});
-      $button.html('Sharing&hellip;').prop('disabled', true);
-      promise.done(function() {
-        $button.html('Shared!');
-      });
-      promise.fail(function(){
-        $button.html('Share failed!');
-      });
-      promise.always(function() {
-        setTimeout(function() {
-          $button.html('Share').prop('disabled', false);
-        }, 3000);
-      });
+      var plName = this.$(e.target).val();
+      if (plName.length > 0) {
+        location.href = '/' + plName;
+      }
     }
   });
 
@@ -261,7 +263,7 @@
       ':plName': 'default'
     },
     'default': function(plName) {
-      new YTPL.views.Playlists({currPlaylist: plName});
+      new YTPL.views.Playlists();
 
       YTPL.results.plName = plName;
       YTPL.playlist.plName = plName;

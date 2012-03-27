@@ -101,11 +101,12 @@ input, button {
 
 button {
   cursor: pointer;
+  margin: 0;
 }
 
 .button {
   background-color: white;
-  box-shadow: #000 5px 5px 0;
+  box-shadow: #000 2px 2px 0;
   color: #445;
   display: inline-block;
   font-weight: bold;
@@ -189,17 +190,28 @@ button {
 
 #playlist {
   border: 1px #445 solid;
-  margin-bottom: 21px;
+  margin: 5px 0 21px 0;
+}
+
+#playlist h2 {
+  font-size: 21px;
+  padding: 0 5px;
+  float: left;
+}
+
+#buttons {
+  padding: 4px 5px;
+  float: right;
+}
+
+#playlist ul {
+  clear: both;
 }
 
 #playlist li {
   background-color: #334;
   padding: 10px;
   border-top: 1px #445 solid;
-}
-
-#playlist li:first-child {
-  border: 0;
 }
 
 #playlist li.playing {

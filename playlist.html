@@ -34,19 +34,17 @@
       ${user['name']}
       &mdash;
       <a href="/fbsignout" class="button">Signout</a>
+      % if playlists:
       <div id=playlists>
-        % if playlists:
         <select>
-          <option value=""></option>
+          <option value="">Your playlists</option>
           % for playlist in playlists:
           <option value="${playlist}">${playlist}
           % endfor
         </select>
-        % endif
-        <button class="button share">Share</button>
         <a href="/new" class="button">New</a>
-        <a href="/random" class="button">Random</a>
       </div>
+      % endif
     % else:
       <a href="/fbsignin?pl_name=${pl_name}" class="button">Signin with Facebook</a>
     % endif
@@ -58,7 +56,16 @@
       <ul id="results"></ul>
     </div>
     % endif
-    <ul id="playlist"></ul>
+    <div id="playlist">
+      <h2>${pl_name}</h2>
+      <div id="buttons">
+        % if user:
+        <button class="button share">Share</button>
+        % endif
+        <a href="/random" class="button">Random</a>
+      </div>
+      <ul></ul>
+    </div>
     <div id="footer">
       by <a href="https://twitter.com/themarksteve" target="_blank">@themarksteve</a>
     </div>
