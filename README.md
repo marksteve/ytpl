@@ -8,7 +8,7 @@ A super simple Youtube playlist web app. Add videos and share the url.
 * ~~Social integration~~
 * ~~Playlist locking~~
 * ~~Drag and drop~~
-* Do search query directly from youtube
+* ~~Do search query directly from youtube~~
 * Whitelist editors
 * Who's listening
 * Instructions
