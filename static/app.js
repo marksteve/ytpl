@@ -275,6 +275,12 @@
         YTPL.player = new YTPL.views.Player({collection: YTPL.playlist});
         YTPL.player.setIframe();
       }});
+
+      $(document).ajaxError(function(e, xhr) {
+        if (xhr.status == 401) {
+          location.href = '/fbsignin?pl_name=' + plName;
+        }
+      });
     }
   });
 

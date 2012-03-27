@@ -310,6 +310,7 @@ def setup_server():
     'tools.sessions.port': int(env.get('DOTCLOUD_DATA_REDIS_PORT', 6379)),
     'tools.sessions.db': 0,
     'tools.sessions.password': env.get('DOTCLOUD_DATA_REDIS_PASSWORD'),
+    'tools.sessions.timeout': 24 * 60, # 1 day
   })
 
 
