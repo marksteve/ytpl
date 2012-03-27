@@ -51,11 +51,7 @@
   YTPL.views.Search = Backbone.View.extend({
     el: '#search',
     events: {
-      'keyup input': 'checkKey',
-      'blur input': function() {
-        this.$('input').val('');
-        this.$('#results').hide();
-      }
+      'keyup input': 'checkKey'
     },
     initialize: function() {
       this.collection.on('reset', this.showResults, this);
