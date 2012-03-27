@@ -66,8 +66,9 @@
     },
     search: function(e) {
       var $q = this.$('input');
+      var ytSearchURL = 'https://gdata.youtube.com/feeds/api/videos?orderby=relevance&max-results=10&v=2&alt=json';
       var promise = $.ajax({
-        url: '/search',
+        url: ytSearchURL,
         data: {
           q: $q.val()
         },
@@ -75,7 +76,18 @@
       });
 
       promise.done(_.bind(function(response) {
-        this.collection.reset(response);
+        var results = _(response.feed.entry).map(function(e) {
+          var thumbnail = _(e.media$group.media$thumbnail).find(function(t) {
+            return t.yt$name == 'hqdefault';
+          });
+          return {
+            vid: e.media$group.yt$videoid.$t,
+            author: e.author[0].name.$t,
+            title: e.title.$t,
+            thumbnail: thumbnail
+          };
+        });
+        this.collection.reset(results);
       }, this));
     },
     showResults: function(collection) {

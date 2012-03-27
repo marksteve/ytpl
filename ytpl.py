@@ -15,8 +15,6 @@ cherrypy.lib.sessions.RedisSession = cherrys.RedisSession
 DEV_SERVER_HOST = 'localhost'
 DEV_SERVER_PORT = 34897
 
-YT_SEARCH_URL = 'https://gdata.youtube.com/feeds/api/videos?q=%s&orderby=relevance&max-results=10&v=2&alt=json'
-
 ENVIRON_FILE = '/home/dotcloud/environment.json'
 
 if os.path.exists(ENVIRON_FILE):
@@ -282,24 +280,6 @@ class YTPL:
       fbclient.graph_request('me/links', method='post', data=data)
     else:
       raise cherrypy.HTTPError(400, 'Playlist is empty')
-
-  @cherrypy.expose
-  @cherrypy.tools.json_out(on=True)
-  def search(self, q):
-    q = urllib.quote_plus(q)
-    if not q:
-      return []
-    r = requests.get(YT_SEARCH_URL % q)
-    feed = json.loads(r.text).get('feed')
-    results = []
-    for e in feed['entry']:
-      results.append({
-        'vid': e['media$group']['yt$videoid']['$t'],
-        'author': e['author'][0]['name']['$t'],
-        'title': e['title']['$t'],
-        'thumbnail': [t for t in e['media$group']['media$thumbnail'] if t['yt$name'] == 'hqdefault'][0],
-      })
-    return results
 
 
 def setup_server():
