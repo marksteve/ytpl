@@ -10,9 +10,9 @@ import redis
 cherrypy.lib.sessions.RedisSession = cherrys.RedisSession
 
 
-DEV_SERVER_HOST = 'localhost'
+DEV_SERVER_HOST = '0.0.0.0'
 DEV_SERVER_PORT = 34897
-
+DEV_SERVER_URL = 'http://ytpl.local'
 ENVIRON_FILE = '/home/dotcloud/environment.json'
 
 if os.path.exists(ENVIRON_FILE):
@@ -22,7 +22,7 @@ if os.path.exists(ENVIRON_FILE):
 else:
   env = os.environ
 
-root_url = env.get('PROD_SERVER_HOST', 'http://%s:%d/' % (DEV_SERVER_HOST, DEV_SERVER_PORT))
+root_url = env.get('PROD_SERVER_HOST', DEV_SERVER_URL)
 root_url = root_url.rstrip('/')
 
 mod_path = os.path.dirname(__file__)
@@ -300,10 +300,14 @@ def start():
   setup_server()
   app = cherrypy.Application(YTPL())
   app.merge({
+    '/': {
+      'tools.proxy.on': True,
+      'tools.proxy.local': 'Host',
+    },
     '/static': {
       'tools.staticdir.on': True,
       'tools.staticdir.dir': os.path.join(mod_path, 'static'),
-    }
+    },
   })
   cherrypy.server.socket_host = DEV_SERVER_HOST
   cherrypy.server.socket_port = DEV_SERVER_PORT
