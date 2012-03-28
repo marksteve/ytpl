@@ -122,6 +122,12 @@ button {
   padding: 10px;
 }
 
+#index {
+  width: 480px;
+  margin: 0 auto;
+  position: relative;
+}
+
 #sidebar {
   width: 480px;
   position: fixed;
