@@ -17,8 +17,6 @@ else:
 
 mod_path = os.path.dirname(__file__)
 root_url = env.get('PROD_SERVER_URL', 'http://%s:%s' % (DEV_SERVER_HOST, DEV_SERVER_PORT)).rstrip('/')
-# I'm too lazy to fix my nginx to work with websockets so let's connect
-# directly to the gunicorn server instead
 
 # Gunicorn config
 bind = '%s:%s' % (DEV_SERVER_HOST, DEV_SERVER_PORT)
