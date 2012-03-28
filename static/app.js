@@ -12,9 +12,6 @@
       model: YTPL.models.Video
     }),
     Playlist: Backbone.Collection.extend({
-      initialize: function() {
-        _.bindAll(this, 'updateVideo');
-      },
       model: YTPL.models.Video,
       url: function() {
         return '/pl/' + this.plName;
@@ -22,8 +19,8 @@
       comparator: function(model) {
         return model.get('pos');
       },
-      updateVideo: function(video) {
-        this.get(video.id).set(video);
+      parse: function(response) {
+        return response.videos;
       }
     })
   });
@@ -135,10 +132,13 @@
         // Remove delete button for non editors
         this.$('.delete').remove();
       }
+      if (YTPL.player && YTPL.player.playing.id == this.model.id) {
+        this.$el.addClass('playing');
+      }
       return this;
     },
     play: function() {
-      YTPL.player.pos = this.model.get('pos');
+      YTPL.player.playing = this.model;
       YTPL.player.play();
     },
     'delete': function(e) {
@@ -146,7 +146,7 @@
       this.model.destroy({
         success: _.bind(function(model, response) {
           this.remove();
-          _(response).each(YTPL.playlist.updateVideo);
+          YTPL.playlist.reset(response.videos, {silent: true});
         }, this)
       });
     }
@@ -191,7 +191,7 @@
         success: _.bind(function(model, response) {
           video.clear(); // save applies changes to the model
           video.set('id', id); // but keep id to be able to update
-          _(response).each(YTPL.playlist.updateVideo);
+          YTPL.playlist.reset(response.videos, {silent: true});
         }, this)
       });
     },
@@ -215,7 +215,7 @@
   });
 
   YTPL.views.Player = Backbone.View.extend({
-    pos: 0, // Start with first video
+    playing: null,
     el: '#player',
     initialize: function() {
       this.collection.on('add', this.playFirstAdd, this);
@@ -232,15 +232,14 @@
     },
     ready: function(e) {
       // Auto play first video
+      this.playing = this.collection.at(0);
       this.play();
     },
     play: function() {
-      this.collection.sort({silent: true});
-      var video = this.collection.at(this.pos);
-      if (video) {
-        this.ytPlayer.loadVideoById(video.get('vid'));
+      if (this.playing) {
+        this.ytPlayer.loadVideoById(this.playing.get('vid'));
         this.ytPlayer.playVideo();
-        video.view.$el.addClass('playing').siblings().removeClass('playing');
+        this.playing.view.$el.addClass('playing').siblings().removeClass('playing');
       }
     },
     playFirstAdd: function() {
@@ -251,9 +250,9 @@
     stateChange: function(e) {
       // Next video
       if (e.data == YT.PlayerState.ENDED) {
-        this.pos++;
-        if (this.pos >= this.collection.length) {
-          this.pos = 0;
+        this.playing = this.collection.at(parseInt(this.playing.get('pos'), 10) + 1);
+        if (!this.playing) {
+          this.playing = this.collection.at(0);
         }
         this.play();
       }
@@ -292,8 +291,27 @@
       YTPL.playlist.fetch({success: function() {
         YTPL.player = new YTPL.views.Player({collection: YTPL.playlist});
         YTPL.player.setIframe();
+
+        YTPL.changes = new WebSocket(YTPL.changesURL);
+
+        YTPL.changes.onopen = function() {
+          YTPL.changes.send(plName);
+        };
+
+        var split, type, data;
+        YTPL.changes.onmessage = function(e) {
+          split = e.data.indexOf(':');
+          action = e.data.substr(0, split);
+          data = JSON.parse(e.data.substr(split + 1));
+          switch (action) {
+            case 'pl_reset':
+              YTPL.playlist.reset(data.videos);
+              break;
+          }
+        };
       }});
 
+      // Handle expired sessions
       $(document).ajaxError(function(e, xhr) {
         if (xhr.status == 401) {
           location.href = '/fbsignin?pl_name=' + plName;
