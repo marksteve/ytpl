@@ -115,13 +115,18 @@ button {
   text-shadow: none;
 }
 
-#ytpl {
+.col {
   background: #334;
   box-shadow: #000 0 0 10px 0;
+  border: 1px #445 solid;
   padding: 10px;
+}
+
+#sidebar {
   width: 480px;
-  margin: 50px auto;
-  position: relative;
+  position: fixed;
+  top: 10px;
+  left: 10px;
 }
 
 #actions {
@@ -189,23 +194,22 @@ button {
 }
 
 #playlist {
-  border: 1px #445 solid;
-  margin: 5px 0 21px 0;
+  margin: 10px 10px 21px 520px;
 }
 
-#playlist h2 {
+#playlist-title {
+  margin-bottom: 10px;
+}
+
+#playlist-title h2 {
   font-size: 21px;
   padding: 0 5px;
   float: left;
 }
 
-#buttons {
+#playlist-title #buttons {
   padding: 4px 5px;
   float: right;
-}
-
-#playlist ul {
-  clear: both;
 }
 
 #playlist li {

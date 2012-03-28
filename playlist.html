@@ -28,45 +28,49 @@
   </script>
 <body>
   <div id="ytpl">
-    <h1><a href="/">YTPL</a></h1>
-    <div id=profile>
-    % if user:
-      ${user['name']}
-      &mdash;
-      <a href="/fbsignout" class="button">Signout</a>
-      % if playlists:
-      <div id=playlists>
-        <select>
-          <option value="">Your playlists</option>
-          % for playlist in playlists:
-          <option value="${playlist}">${playlist}
-          % endfor
-        </select>
-        <a href="/new" class="button">New</a>
+    <div id="sidebar" class="col">
+      <h1><a href="/">YTPL</a></h1>
+      <div id=profile>
+      % if user:
+        ${user['name']}
+        &mdash;
+        <a href="/fbsignout" class="button">Signout</a>
+        % if playlists:
+        <div id=playlists>
+          <select>
+            <option value="">Your playlists</option>
+            % for playlist in playlists:
+            <option value="${playlist}">${playlist}
+            % endfor
+          </select>
+          <a href="/new" class="button">New</a>
+          <a href="/random" class="button">Random</a>
+        </div>
+        % endif
+      % else:
+        <a href="/fbsignin?pl_name=${pl_name}" class="button">Signin with Facebook</a>
+      % endif
+      </div>
+      <div id="player"></div>
+      % if can_edit:
+      <div id="search">
+        <input type="text" placeholder="Start typing to add entries to your playlist">
+        <ul id="results"></ul>
       </div>
       % endif
-    % else:
-      <a href="/fbsignin?pl_name=${pl_name}" class="button">Signin with Facebook</a>
-    % endif
+      <div id="footer">
+        by <a href="https://twitter.com/themarksteve" target="_blank">@themarksteve</a>
+      </div>
     </div>
-    <div id="player"></div>
-    % if can_edit:
-    <div id="search">
-      <input type="text" placeholder="Start typing to add entries to your playlist">
-      <ul id="results"></ul>
-    </div>
-    % endif
-    <div id="playlist">
-      <h2>${pl_name}</h2>
-      <div id="buttons">
-        % if user:
-        <button class="button share">Share</button>
-        % endif
-        <a href="/random" class="button">Random</a>
+    <div id="playlist" class="col">
+      <div id="playlist-title" class="cf">
+        <h2>${pl_name}</h2>
+        <div id="buttons">
+          % if user:
+          <button class="button share">Share</button>
+          % endif
+        </div>
       </div>
       <ul></ul>
-    </div>
-    <div id="footer">
-      by <a href="https://twitter.com/themarksteve" target="_blank">@themarksteve</a>
     </div>
   </div>
