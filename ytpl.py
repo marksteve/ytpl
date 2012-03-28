@@ -6,8 +6,6 @@ import json
 import os
 import random
 import redis
-import requests
-import urllib
 
 cherrypy.lib.sessions.RedisSession = cherrys.RedisSession
 
@@ -219,6 +217,7 @@ class YTPL:
   def pl(self, pl_name, id=None):
     pl_key = 'pl:%s' % pl_name
     creator_key = 'creator:%s' % pl_name
+    id_vid_key = 'id_vid:%s' % pl_name
 
     # check permissions
     if self.user and self.redis.get(creator_key) == self.user['id']:
@@ -230,11 +229,14 @@ class YTPL:
     if self.req.method == 'POST':
       video = self.req.json
 
-      id = randstr(12)
+      while True:
+        id = randstr(12)
+        if not self.redis.hexists(id_vid_key, id):
+          break
       vid = video['vid']
 
       # Store vid reference
-      self.redis.hset('id_vid:%s' % pl_name, id, vid)
+      self.redis.hset(id_vid_key, id, vid)
 
       # Store vid info
       self.redis.set('vid:%s' % vid, '%s:%s' % (vid, json.dumps(video)))
