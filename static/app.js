@@ -40,7 +40,9 @@
       return this;
     },
     addToPL: function(e) {
-      YTPL.playlist.create(this.model.toJSON());
+      // Wait for this since we need to assign an id to the element attribute as it renders
+      // and the id is given after the post request succeeds
+      YTPL.playlist.create(this.model.toJSON(), {wait: true});
       YTPL.results.reset([]);
     }
   });
@@ -141,12 +143,15 @@
       YTPL.player.playing = this.model;
       YTPL.player.play();
     },
-    'delete': function(e) {
+    'delete': function(e, x, y, z) {
       e.preventDefault();
       this.model.destroy({
         success: _.bind(function(model, response) {
           this.remove();
-          YTPL.playlist.reset(response.videos, {silent: true});
+          // Update positions
+          _(response.videos).each(function(video) {
+            YTPL.playlist.get(video.id).set('pos', video.pos);
+          });
         }, this)
       });
     }
@@ -172,8 +177,12 @@
         $ul.sortable().disableSelection();
       }
     },
-    addVideo: function(model) {
+    addVideo: function(model, indexOrCollection) {
       var $ul = this.$('ul');
+      // `add` passes the index while `create` passes the collection
+      if (!_(indexOrCollection).isNumber()) {
+        $ul.sortable().disableSelection();
+      }
       if (this.collection.length == 1) {
         $ul.empty();
       }
@@ -189,9 +198,10 @@
       var video = this.collection.get(id);
       video.save({id: id, pos: pos}, {
         success: _.bind(function(model, response) {
-          video.clear(); // save applies changes to the model
-          video.set('id', id); // but keep id to be able to update
-          YTPL.playlist.reset(response.videos, {silent: true});
+          // Update positions
+          _(response.videos).each(function(video) {
+            YTPL.playlist.get(video.id).set('pos', video.pos);
+          });
         }, this)
       });
     },
@@ -306,6 +316,9 @@
           switch (action) {
             case 'pl_reset':
               YTPL.playlist.reset(data.videos);
+              break;
+            case 'pl_add':
+              YTPL.playlist.add(data.video);
               break;
           }
         };

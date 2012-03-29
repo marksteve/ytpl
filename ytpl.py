@@ -197,6 +197,11 @@ def pl(pl_name, id=None):
       'pos': pos,
     })
 
+    # Let other viewers know what changed
+    r.publish('plrt:%s' % pl_name, '%s:pl_add:%s' % (session['user']['id'], json.dumps({
+      'video': video,
+    })))
+
     return jsonify(**video)
 
   elif request.method == 'PUT':
@@ -206,14 +211,6 @@ def pl(pl_name, id=None):
     asc = new_pos - old_pos > 0
     r.zadd(pl_key, id, float(new_pos + (0.5 if asc else -0.5)))
     resort_videos(pl_key)
-    videos = get_videos(pl_name)
-
-    # Let other viewers know what changed
-    r.publish('plrt:%s' % pl_name, '%s:pl_reset:%s' % (session['user']['id'], json.dumps({
-      'videos': videos,
-    })))
-
-    return jsonify(videos=videos)
 
   elif request.method == 'DELETE':
     if id:
@@ -223,8 +220,15 @@ def pl(pl_name, id=None):
       # Clear all
       r.zremrangebyrank(pl_key, 0, -1)
 
-  else:
-    return jsonify(videos=get_videos(pl_name))
+  videos = get_videos(pl_name)
+
+  if request.method in ('PUT', 'DELETE'):
+    # Let other viewers know what changed
+    r.publish('plrt:%s' % pl_name, '%s:pl_reset:%s' % (session['user']['id'], json.dumps({
+      'videos': videos,
+    })))
+
+  return jsonify(videos=get_videos(pl_name))
 
 
 @app.route('/share/<pl_name>')
