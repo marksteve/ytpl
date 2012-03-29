@@ -4,7 +4,7 @@ data:
 www:
   type: custom
   processes:
-    app: /home/dotcloud/env/bin/gunicorn -c config ytpl:app
+    app: /home/dotcloud/env/bin/gunicorn -c config -b 0.0.0.0:$PORT_WWW ytpl:app
   ports:
     www: http
   systempackages:

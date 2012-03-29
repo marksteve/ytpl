@@ -19,5 +19,6 @@ mod_path = os.path.dirname(__file__)
 root_url = env.get('PROD_SERVER_URL', 'http://%s:%s' % (DEV_SERVER_HOST, DEV_SERVER_PORT)).rstrip('/')
 
 # Gunicorn config
-bind = '%s:%s' % (DEV_SERVER_HOST, DEV_SERVER_PORT)
+if debug:
+  bind = '%s:%s' % (DEV_SERVER_HOST, DEV_SERVER_PORT)
 worker_class = 'ytpl.GeventWebSocketWorker'
