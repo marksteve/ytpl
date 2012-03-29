@@ -2,4 +2,10 @@ data:
   type: redis
 
 www:
-  type: python
+  type: custom
+  processes:
+    app: /home/dotcloud/env/bin/gunicorn -c config ytpl:app
+  ports:
+    www: http
+  systempackages:
+    - libevent-dev
