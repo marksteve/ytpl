@@ -2,7 +2,7 @@ from gevent import monkey
 monkey.patch_all()
 from datetime import datetime
 from fboauth2 import FBClient
-from flask import Flask, request, session, redirect, abort, jsonify, make_response
+from flask import Flask, request, session, redirect, abort, jsonify
 from geventwebsocket.handler import WebSocketHandler
 from gunicorn.workers.ggevent import GeventPyWSGIWorker
 from mako.template import Template
