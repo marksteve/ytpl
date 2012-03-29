@@ -15,3 +15,6 @@ A super simple Youtube playlist web app. Add videos and share the url.
 * Real-time changes (collab)
 * Stats/Rankings
 * Featured playlists
+
+## License
+http://marksteve.mit-license.org/
