@@ -363,7 +363,7 @@
             YTPL.ws.send(plName);
             YTPL.olInterval = setInterval(function() {
               YTPL.ws.send('ol');
-            }, 3000);
+            }, 30000);
           };
 
           var split, type, data;
