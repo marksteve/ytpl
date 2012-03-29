@@ -10,7 +10,7 @@ A super simple Youtube playlist web app. Add videos and share the url.
 * ~~Drag and drop~~
 * ~~Do search query directly from youtube~~
 * ~~Real-time changes (collab)~~
-* Who's listening
+* ~~Who's listening~~
 * Whitelist editors
 * Instructions
 * Stats/Rankings
