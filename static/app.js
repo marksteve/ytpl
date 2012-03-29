@@ -348,38 +348,56 @@
         YTPL.player = new YTPL.views.Player({collection: YTPL.playlist});
         YTPL.player.setIframe();
 
-        YTPL.changes = new WebSocket(YTPL.changesURL);
+        YTPL.wsRetries = 0;
 
-        YTPL.changes.onopen = function() {
-          YTPL.changes.send(plName);
-          setInterval(function() {
-            YTPL.changes.send('ol');
-          }, 3000);
-        };
-
-        var split, type, data;
-        YTPL.changes.onmessage = function(e) {
-          split = e.data.indexOf(':');
-          action = e.data.substr(0, split);
-          data = JSON.parse(e.data.substr(split + 1));
-          switch (action) {
-            case 'pl_reset':
-              YTPL.playlist.reset(data.videos);
-              break;
-            case 'pl_add':
-              YTPL.playlist.add(data.video);
-              break;
-            case 'pl_listeners':
-              YTPL.listeners.reset(data);
-              break;
-            case 'pl_listen':
-              YTPL.listeners.add(data);
-              break;
-            case 'pl_leave':
-              YTPL.listeners.remove(data.id);
-              break;
+        YTPL.wsConnect = function() {
+          if (YTPL.olInterval) {
+            clearInterval(YTPL.olInterval);
           }
+
+          YTPL.ws = new WebSocket(YTPL.wsURL);
+
+          YTPL.ws.onopen = function() {
+            console.log('Connected.');
+
+            YTPL.ws.send(plName);
+            YTPL.olInterval = setInterval(function() {
+              YTPL.ws.send('ol');
+            }, 3000);
+          };
+
+          var split, type, data;
+          YTPL.ws.onmessage = function(e) {
+            split = e.data.indexOf(':');
+            action = e.data.substr(0, split);
+            data = JSON.parse(e.data.substr(split + 1));
+            switch (action) {
+              case 'pl_reset':
+                YTPL.playlist.reset(data.videos);
+                break;
+              case 'pl_add':
+                YTPL.playlist.add(data.video);
+                break;
+              case 'pl_listeners':
+                YTPL.listeners.reset(data);
+                break;
+              case 'pl_listen':
+                YTPL.listeners.add(data);
+                break;
+              case 'pl_leave':
+                YTPL.listeners.remove(data.id);
+                break;
+            }
+          };
+
+          YTPL.ws.onclose = function() {
+            console.log('Reconnecting...');
+            YTPL.wsRetries++;
+            setTimeout(YTPL.wsConnect, Math.pow(2, YTPL.wsRetries) * 1000);
+          };
         };
+
+        YTPL.wsConnect();
       }});
 
       // Handle expired sessions

@@ -151,10 +151,10 @@ def playlist(pl_name):
 
   # TODO: Add whitelist editors
 
-  changes_url = '%s/changes' % config.root_url.replace('http', 'ws')
+  ws_url = '%s/ws' % config.root_url.replace('http', 'ws')
 
   return t.render(user=session.get('user'), pl_name=pl_name, og=og, title=title, can_edit=can_edit,
-                  playlists=playlists, debug=config.debug, changes_url=changes_url)
+                  playlists=playlists, debug=config.debug, ws_url=ws_url)
 
 
 @app.route('/pl/<pl_name>', methods=['GET', 'POST', 'PUT', 'DELETE'])
@@ -310,8 +310,8 @@ def changes_publisher(pl_name, ws, user_id):
     ws.send(data)
 
 
-@app.route('/changes')
-def changes():
+@app.route('/ws')
+def ws():
   ws = request.environ.get('wsgi.websocket')
   if ws:
     user = session.get('user')
