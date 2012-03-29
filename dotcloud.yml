@@ -3,6 +3,7 @@ data:
 
 www:
   type: custom
+  buildscript: builder
   processes:
     app: /home/dotcloud/env/bin/gunicorn -c config -b 0.0.0.0:$PORT_WWW ytpl:app
   ports:
