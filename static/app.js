@@ -4,6 +4,15 @@
 
   _(YTPL.models).extend({
     Video: Backbone.Model.extend({
+    }),
+    Listener: Backbone.Model.extend({
+      initialize: function() {
+        if (this.get('username')) {
+          this.set('photo', 'http://graph.facebook.com/' + this.get('username') + '/picture');
+        } else {
+          this.set('photo', '/static/anon.jpg');
+        }
+      }
     })
   });
 
@@ -22,6 +31,9 @@
       parse: function(response) {
         return response.videos;
       }
+    }),
+    Listeners: Backbone.Collection.extend({
+      model: YTPL.models.Listener
     })
   });
 
@@ -32,9 +44,9 @@
       'click': 'addToPL'
     },
     template:
-      '<img src="<%= thumbnail.url %>">' +
-      '<h3 class="title"><%= title %></h3>' +
-      '<span class="author"><%= author %></span>',
+      '<img src="<%- thumbnail.url %>">' +
+      '<h3 class="title"><%- title %></h3>' +
+      '<span class="author"><%- author %></span>',
     render: function() {
       this.$el.html(_.template(this.template, this.model.toJSON()));
       return this;
@@ -121,10 +133,10 @@
       'click .delete': 'delete'
     },
     template:
-      '<img src="<%= thumbnail.url %>">' +
+      '<img src="<%- thumbnail.url %>">' +
       '<a href="#" class="delete">&times;</a>' +
-      '<h3 class="title"><%= title %></h3>' +
-      '<span class="author"><%= author %></span>',
+      '<h3 class="title"><%- title %></h3>' +
+      '<span class="author"><%- author %></span>',
     render: function() {
       if (this.model.id) {
         this.$el.attr('id', this.model.id);
@@ -282,8 +294,41 @@
     }
   });
 
+  YTPL.views.Listener = Backbone.View.extend({
+    tagName: 'li',
+    template:
+      '<img src="<%- photo %>"> <%- name %>',
+    render: function() {
+      this.$el.html(_.template(this.template, this.model.toJSON()));
+      return this;
+    }
+  });
+
+  YTPL.views.Listeners = Backbone.View.extend({
+    el: '#listeners',
+    initialize: function() {
+      this.collection.on('add', this.addListener, this);
+      this.collection.on('reset', this.addListeners, this);
+      this.collection.on('remove', this.removeListener, this);
+    },
+    addListener: function(model) {
+      var $ul = this.$('ul');
+      model.view = new YTPL.views.Listener({
+        model: model
+      });
+      $ul.append(model.view.render().el);
+    },
+    addListeners: function(collection) {
+      collection.each(this.addListener, this);
+    },
+    removeListener: function(model) {
+      model.view.remove();
+    }
+  });
+
   YTPL.results = new YTPL.collections.Results();
   YTPL.playlist = new YTPL.collections.Playlist();
+  YTPL.listeners = new YTPL.collections.Listeners();
 
   YTPL.Router = Backbone.Router.extend({
     routes: {
@@ -297,6 +342,7 @@
 
       new YTPL.views.Search({collection: YTPL.results});
       new YTPL.views.Playlist({collection: YTPL.playlist});
+      new YTPL.views.Listeners({collection: YTPL.listeners});
 
       YTPL.playlist.fetch({success: function() {
         YTPL.player = new YTPL.views.Player({collection: YTPL.playlist});
@@ -306,6 +352,9 @@
 
         YTPL.changes.onopen = function() {
           YTPL.changes.send(plName);
+          setInterval(function() {
+            YTPL.changes.send('ol');
+          }, 3000);
         };
 
         var split, type, data;
@@ -319,6 +368,15 @@
               break;
             case 'pl_add':
               YTPL.playlist.add(data.video);
+              break;
+            case 'pl_listeners':
+              YTPL.listeners.reset(data);
+              break;
+            case 'pl_listen':
+              YTPL.listeners.add(data);
+              break;
+            case 'pl_leave':
+              YTPL.listeners.remove(data.id);
               break;
           }
         };

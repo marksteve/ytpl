@@ -314,21 +314,64 @@ def changes_publisher(pl_name, ws, user_id):
 def changes():
   ws = request.environ.get('wsgi.websocket')
   if ws:
-    user_id = session['user']['id'] if session.get('user') else None
+    user = session.get('user')
+    if user:
+      user = dict([(n, user[n]) for n in ('id', 'name', 'username')])
+    else:
+      user = {'id': randstr(24), 'name': 'Anonymous', 'username': None}
+
+    user_id = user['id']
 
     # Initial message should be playlist name
     pl_name = None
     while not pl_name:
       pl_name = ws.receive()
 
+    plls_key = 'plls:%s' % pl_name
+    plrt_key = 'plrt:%s' % pl_name
+    ol_key = 'ol:%s' % user_id
+
     publisher = gevent.spawn(changes_publisher, pl_name, ws, user_id)
+
+    # I'm online!
+    r.set(ol_key, 1)
+    r.expire(ol_key, 60)
+
+    # Tell other listeners that you are listening
+    r.hset(plls_key, user_id, '%s:%s' % (user['name'], user['username']))
+    r.publish(plrt_key, '%s:pl_listen:%s' % (user_id, json.dumps(user)))
+
+    # Who's listening?
+    listeners = []
+    for ls_id, ls in r.hgetall(plls_key).items():
+      if ls_id != user_id:
+        ls_ol_key = 'ol:%s' % ls_id
+        if r.get(ls_ol_key):
+          ls_name, ls_username = ls.split(':', 1)
+          listeners.append({
+            'id': ls_id,
+            'name': ls_name,
+            'username': None if ls_username == 'None' else ls_username,
+          })
+        else:
+          r.hdel(plls_key, ls_id)
+    ws.send('pl_listeners:%s' % json.dumps(listeners))
 
     try:
       while True:
         message = ws.receive()
-        if not message:
+        if message:
+          # I'm still online!
+          if message == 'ol':
+            r.expire(ol_key, 60)
+        else:
           break
+
     finally:
+      # Say bye bye
+      r.hdel(plls_key, user['id'])
+      r.publish(plrt_key, '%s:pl_leave:%s' % (user_id, json.dumps(user)))
+
       publisher.kill()
 
   return 'ok'
