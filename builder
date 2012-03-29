@@ -4,7 +4,7 @@
 
 . $HOME/env/bin/activate
 
-python setup.py develop
+python setup.py install
 
 cp -Rf * $HOME/
 
