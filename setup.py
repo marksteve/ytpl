@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
   name='ytpl',
-  version='0.0.1',
+  version='0.1.0',
   py_modules=['ytpl'],
   author='Mark Steve Samson',
   author_email='contact@marksteve.me',
