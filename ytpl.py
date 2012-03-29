@@ -19,7 +19,7 @@ def randstr(l=8):
 
 
 app = Flask(__name__)
-app.secret_key = config.env.get('SESSION_SECRET_KEY', 'mKzS85NhkAzFDGLRdM4pNQsIK2Png5u/xKMNBcJHsHU')
+app.secret_key = str(config.env.get('SESSION_SECRET_KEY', 'mKzS85NhkAzFDGLRdM4pNQsIK2Png5u897asjk'))
 app.debug = config.debug
 
 
