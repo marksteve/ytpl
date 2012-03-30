@@ -238,6 +238,7 @@
 
   YTPL.views.Player = Backbone.View.extend({
     playing: null,
+    played: [],
     el: '#player',
     initialize: function() {
       this.collection.on('add', this.playFirstAdd, this);
@@ -262,6 +263,7 @@
         this.ytPlayer.loadVideoById(this.playing.get('vid'));
         this.ytPlayer.playVideo();
         this.playing.view.$el.addClass('playing').siblings().removeClass('playing');
+        this.played.push(this.playing.id);
       }
     },
     playFirstAdd: function() {
@@ -272,11 +274,25 @@
     stateChange: function(e) {
       // Next video
       if (e.data == YT.PlayerState.ENDED) {
-        this.playing = this.collection.at(parseInt(this.playing.get('pos'), 10) + 1);
-        if (!this.playing) {
-          this.playing = this.collection.at(0);
+        var playing;
+        if ($('#shuffle').prop('checked')) {
+          while (true) {
+            playing = this.collection.at(Math.floor(Math.random() * this.collection.size()));
+            if (_(this.played).include(playing.id)) {
+              continue;
+            }
+            break;
+          }
+        } else {
+          playing = this.collection.at(parseInt(this.playing.get('pos'), 10) + 1);
         }
+
+        this.playing = playing || this.collection.at(0);
         this.play();
+
+        if (this.played.length > Math.floor(this.collection.size() / 2)) {
+          this.played.shift();
+        }
       }
     }
   });
