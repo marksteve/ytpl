@@ -151,10 +151,8 @@ def playlist(pl_name):
 
   # TODO: Add whitelist editors
 
-  ws_url = '%s/ws' % config.root_url.replace('http', 'ws')
-
   return t.render(user=session.get('user'), pl_name=pl_name, og=og, title=title, can_edit=can_edit,
-                  playlists=playlists, debug=config.debug, ws_url=ws_url)
+                  playlists=playlists, debug=config.debug, ws_url=config.ws_url)
 
 
 @app.route('/pl/<pl_name>', methods=['GET', 'POST', 'PUT', 'DELETE'])

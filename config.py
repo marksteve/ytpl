@@ -17,6 +17,7 @@ else:
 
 mod_path = os.path.dirname(__file__)
 root_url = env.get('PROD_SERVER_URL', 'http://%s:%s' % (DEV_SERVER_HOST, DEV_SERVER_PORT)).rstrip('/')
+ws_url = '%s/ws' % env.get('DOTCLOUD_WWW_HTTP_URL', root_url).replace('http', 'ws')
 
 # Gunicorn config
 if debug:
